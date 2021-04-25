@@ -24,7 +24,7 @@ import re
 import struct
 import os
 import zlib
-#from PIL import Image
+from PIL import Image
 
 # This is a very simple script to make a PDF file out of the output of a
 # multipage symbol compression.
@@ -296,7 +296,7 @@ def main(pagefiles):
       try:
         im = Image.open(page_bg)
         (imw, imh) = im.size
-        bgdata = zlib.compress(im.tostring())
+        bgdata = zlib.compress(im.tobytes())
       except IOError:
         sys.stderr.write("error reading background image %s\n" % page_bg)
         bg_type = ''
