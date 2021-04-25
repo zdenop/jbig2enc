@@ -5,7 +5,6 @@ As the original creator seems to not maintain the original repository, this bran
 
 # Original
 
-
 This is an encoder for [JBIG2](fcd14492.pdf).
 
 JBIG2 encodes bi-level (1 bpp) images using a number of clever tricks to get
@@ -53,3 +52,38 @@ Repack large pdf file created with djvu2pdf or tiff2pdf using jbig2 compression 
 images and keep your pdf title page packed as colored jpeg. Depends on ImageMagic installed.
 
 $ ~/[path]/pdfsizeopt-jb2.sh large.pdf
+
+
+# Building
+
+## Cmake
+
+### Windows
+
+```
+"c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" x64
+SET INSTALL_DIR=f:\win64_llvm
+SET PATH=%PATH%;%INSTALL_DIR%\bin
+
+cmake -Bbuild.msvc -DCMAKE_INSTALL_PREFIX=%INSTALL_DIR% -DCMAKE_PREFIX_PATH=%INSTALL_DIR%
+cmake --build build.msvc --config Release
+```
+
+#### Install
+
+```
+cmake --build build.msvc --config Release --target install
+```
+
+#### Uninstall
+
+```
+cat build.msvc/install_manifest.txt | dos2unix | xargs rm
+
+```
+
+#### Clean
+
+```
+rm -r build.msvc/*
+```

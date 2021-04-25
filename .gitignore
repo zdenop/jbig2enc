@@ -32,3 +32,4 @@ ar-lib
 compile
 
 stduviewer/*
+build*
