@@ -1,3 +1,11 @@
+# NOTE
+
+As the original creator seems to not maintain the original repository, this branch tries to collect all improvement from others forks.
+
+
+# Original
+
+
 This is an encoder for [JBIG2](fcd14492.pdf).
 
 JBIG2 encodes bi-level (1 bpp) images using a number of clever tricks to get
