@@ -38,7 +38,7 @@ $ jbig2 -s -S -p -v -O out.png *.jpg
 If you want to encode an image as jbig2 (can be view in STDU Viewer) run:
 
 ```
-$ jbig2 -s feyn.tif &gt;feyn.jb2
+$ jbig2 -s feyn.tif >feyn.jb2
 ```
 
 Repack large pdf file created with djvu2pdf or tiff2pdf using jbig2 compression for gray scale
