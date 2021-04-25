@@ -99,7 +99,7 @@ class Obj:
       d['Length'] = str(len(stream))
     self.d = Dict(d)
     self.stream = stream
-  
+
   def addToDict(self, key, value):
     self.d[key] = value
 
@@ -152,7 +152,7 @@ def parse_palette(format, mode, spal):
   num_colors = len(spal) / per_color
   ret = []
   really_rgb = False
-  
+
   for i in range(0, num_colors):
     # Modes except 'RGB' are untested. I am actually not sure PIL can ever generate
     # a palette with a colorspace different from RGB.
@@ -171,12 +171,12 @@ def parse_palette(format, mode, spal):
       # but it actually may well be in grayscale.
       if not really_rgb and (color[0] != color[1] or color[1] != color[2] or color[0] != color[2]):
         really_rgb = True
-      
+
     elif per_color == 1:
       color = (ord(spal[i]))
-    
+
     ret.append(color)
-  
+
   if not really_rgb:
     for i in range(0, num_colors):
       ret[i] = (ret[i][0],)
@@ -184,9 +184,9 @@ def parse_palette(format, mode, spal):
       mode = '1'
     else:
       mode = 'L'
-  
+
   return(mode, tuple(ret))
-    
+
 
 def main(pagefiles):
   doc = Doc()
@@ -254,7 +254,7 @@ def main(pagefiles):
     if symd == None:
       sys.stderr.write("Could not find symbol dictionary %s.sym\n" % p)
       return
-    
+
     xobj = Obj({
       'Type': '/XObject',
       'Subtype': '/Image',
@@ -273,14 +273,14 @@ def main(pagefiles):
       'ProcSet': '[/PDF /ImageB]',
       'XObject': '<< /Im1 %d 0 R >>' % xobj.id
       })
-     
+
     bg_type = ''
     for ext in grexts.keys():
       if os.access(p + ".bg." + ext, os.R_OK):
         page_bg = p + ".bg." + ext
         bg_type = grexts[ext]
-              
-    
+
+
     if bg_type == 'jpeg':
       try:
         # Load the image into PIL just to get its size and other parameters
@@ -300,7 +300,7 @@ def main(pagefiles):
       except IOError:
         sys.stderr.write("error reading background image %s\n" % page_bg)
         bg_type = ''
-    
+
     if bg_type != '':
         bgimage = Obj({
           'Type': '/XObject',
@@ -317,7 +317,7 @@ def main(pagefiles):
           'ProcSet': '[/PDF /ImageB]',
           'XObject': '<< /Im1 %d 0 R /Im2 %d 0 R >>' % (xobj.id, bgimage.id)
           })
-        
+
         if not im.mode in cmodes.keys():
           im = im.convert('RGB')
         cspace = cmodes[im.mode]
@@ -331,17 +331,17 @@ def main(pagefiles):
           cspace = cspace + ">]"
 
         bgimage.addToDict('ColorSpace', cspace)
-        
+
         if im.mode == '1':
           bgimage.addToDict('BitsPerComponent', '1')
         else:
           bgimage.addToDict('BitsPerComponent', '8')
-        
+
         if bg_type == 'jpeg':
           bgimage.addToDict('Filter', '/DCTDecode')
         elif bg_type == 'png' or bg_type == 'tiff':
           bgimage.addToDict('Filter', '/FlateDecode')
-        
+
     doc_objs = [xobj, contents, resources]
     if bg_type != '':
       doc_objs.append(bgimage)
@@ -360,7 +360,7 @@ def main(pagefiles):
 
     pages.d.d['Count'] = str(len(page_objs))
     pages.d.d['Kids'] = '[' + ' '.join([ref(x.id) for x in page_objs]) + ']'
-    
+
     sys.stderr.write("Processed %s\n" % pname)
     if bg_type != '':
       sys.stderr.write("Added background image from %s\n" % page_bg)
@@ -372,7 +372,7 @@ def usage(script, msg):
     sys.stderr.write("%s: %s\n"% (script, msg))
   sys.stderr.write("Usage: %s [files to process] > out.pdf\n"% script)
   sys.exit(1)
-  
+
 global_next_id = 1
 proc = RegexpProcessor()
 
@@ -380,7 +380,7 @@ if __name__ == '__main__':
   if sys.platform == "win32":
     import msvcrt
     msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
-  
+
   if len(sys.argv) > 1:
     files = sys.argv[1:]
   elif len(sys.argv) == 1:
@@ -395,6 +395,6 @@ if __name__ == '__main__':
 
   if len(pages) == 0:
     usage(sys.argv[0], "no pages found!")
-  
+
   main(pages)
-  
+
