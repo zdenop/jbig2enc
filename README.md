@@ -43,7 +43,7 @@ If you want to encode an image and then view output first to include in pdf
 $ jbig2 -s -S -p -v -O out.png *.jpg
 ```
 
-If you want to encode an image as jbig2 (can be view in STDU Viewer) run:
+If you want to encode an image as jbig2 (can be view in [STDU Viewer](http://www.stdutility.com/stduviewer.html) on Windows) run:
 
 ```
 $ jbig2 -s feyn.tif >feyn.jb2

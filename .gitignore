@@ -30,3 +30,5 @@ missing
 ltmain.sh
 ar-lib
 compile
+
+stduviewer/*
