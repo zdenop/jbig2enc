@@ -30,104 +30,112 @@ import platform
 # python pdf.py output > out.pdf
 
 DPI = 72
-ispy2 = platform.python_version_tuple()[0]=='2'
-ispy3 = platform.python_version_tuple()[0]=='3'
+ispy2 = platform.python_version_tuple()[0] == "2"
+ispy3 = platform.python_version_tuple()[0] == "3"
 
 
 class Ref:
-  def __init__(self, x):
-    self.x = x
+    def __init__(self, x):
+        self.x = x
 
-  def get_bytes(self):
-    return b"%d 0 R" % self.x
+    def get_bytes(self):
+        return b"%d 0 R" % self.x
+
 
 class Dict:
-  def __init__(self, values = {}):
-    self.d = {}
-    self.d.update(values)
+    def __init__(self, values={}):
+        self.d = {}
+        self.d.update(values)
 
-  def get_bytes(self):
-    s = [b'<< ']
-    for (x, y) in self.d.items():
-      s.append(b'/%s ' % x.encode())
-      s.append(y.encode())
-      s.append(b"\n")
-    s.append(b">>\n")
+    def get_bytes(self):
+        s = [b"<< "]
+        for (x, y) in self.d.items():
+            s.append(b"/%s " % x.encode())
+            s.append(y.encode())
+            s.append(b"\n")
+        s.append(b">>\n")
 
-    return b''.join(s)
+        return b"".join(s)
+
 
 global_next_id = 1
 
+
 class Obj:
-  next_id = 1
-  def __init__(self, d = {}, stream = None):
-    global global_next_id
+    next_id = 1
 
-    if stream is not None:
-      d['Length'] = str(len(stream))
-    self.d = Dict(d)
-    self.stream = stream
-    self.id = global_next_id
-    global_next_id += 1
+    def __init__(self, d={}, stream=None):
+        global global_next_id
 
-  def get_bytes(self):
-    s = []
-    s.append(self.d.get_bytes())
-    if self.stream is not None:
-      s.append(b'stream\n')
-      if ispy3 and isinstance(self.stream, str):
-        s.append(self.stream.encode())
-      else:
-        s.append(self.stream)
-      s.append(b'\nendstream\n')
-    s.append(b'endobj\n')
+        if stream is not None:
+            d["Length"] = str(len(stream))
+        self.d = Dict(d)
+        self.stream = stream
+        self.id = global_next_id
+        global_next_id += 1
 
-    return b''.join(s)
+    def get_bytes(self):
+        s = []
+        s.append(self.d.get_bytes())
+        if self.stream is not None:
+            s.append(b"stream\n")
+            if ispy3 and isinstance(self.stream, str):
+                s.append(self.stream.encode())
+            else:
+                s.append(self.stream)
+            s.append(b"\nendstream\n")
+        s.append(b"endobj\n")
+
+        return b"".join(s)
+
 
 class Doc:
-  def __init__(self):
-    self.objs = []
-    self.pages = []
+    def __init__(self):
+        self.objs = []
+        self.pages = []
 
-  def add_object(self, o):
-    self.objs.append(o)
-    return o
+    def add_object(self, o):
+        self.objs.append(o)
+        return o
 
-  def add_page(self, o):
-    self.pages.append(o)
-    return self.add_object(o)
+    def add_page(self, o):
+        self.pages.append(o)
+        return self.add_object(o)
 
-  def get_bytes(self):
-    a = []
-    j = [0]
-    offsets = []
+    def get_bytes(self):
+        a = []
+        j = [0]
+        offsets = []
 
-    def add(x):
-      a.append(x)
-      j[0] += len(x) + 1
-    add(b'%PDF-1.4')
-    for o in self.objs:
-      offsets.append(j[0])
-      add(b'%d 0 obj' % o.id)
-      add(o.get_bytes())
-    xrefstart = j[0]
-    a.append(b'xref')
-    a.append(b'0 %d' % (len(offsets) + 1))
-    a.append(b'0000000000 65535 f ')
-    for o in offsets:
-      a.append(b'%010d 00000 n ' % o)
-    a.append(b'')
-    a.append(b'trailer')
-    a.append(b'<< /Size %d\n/Root 1 0 R >>' % (len(offsets) + 1))
-    a.append(b'startxref')
-    a.append(b'%d' % xrefstart)
-    a.append(b'%%EOF')
+        def add(x):
+            a.append(x)
+            j[0] += len(x) + 1
 
-    # sys.stderr.write(str(offsets) + "\n")
-    return b'\n'.join(a)
+        add(b"%PDF-1.4")
+        for o in self.objs:
+            offsets.append(j[0])
+            add(b"%d 0 obj" % o.id)
+            add(o.get_bytes())
+        xrefstart = j[0]
+        a.append(b"xref")
+        a.append(b"0 %d" % (len(offsets) + 1))
+        a.append(b"0000000000 65535 f ")
+        for o in offsets:
+            a.append(b"%010d 00000 n " % o)
+        a.append(b"")
+        a.append(b"trailer")
+        a.append(b"<< /Size %d\n/Root 1 0 R >>" % (len(offsets) + 1))
+        a.append(b"startxref")
+        a.append(b"%d" % xrefstart)
+        a.append(b"%%EOF")
+
+        # sys.stderr.write(str(offsets) + "\n")
+        return b"\n".join(a)
+
 
 def ref(x):
-  return '%d 0 R' % x
+    return "%d 0 R" % x
+
 
 # https://www.opennet.ru/docs/formats/jpeg.txt
 #
@@ -161,154 +169,189 @@ def ref(x):
 # bits_per_component
 #   8 - bits per pixel
 def get_jpg_props(buf):
-  density_type = ord(buf[0x0d])
-  xres, yres = struct.unpack(">HH", buf[0x0e:0x12])
+    density_type = ord(buf[0x0D])
+    xres, yres = struct.unpack(">HH", buf[0x0E:0x12])
 
-  pos = 0
-  pos += 2
-  b = buf[pos]
-  while (ord(b) != 0xDA):
-    while (ord(b) != 0xFF):
-      b = buf[pos]
-      pos = pos + 1
-    while (ord(b) == 0xFF):
-      b = buf[pos]
-      pos = pos + 1
-    if (ord(b) >= 0xC0 and ord(b) <= 0xC3):
-        pos += 2
-        bits_per_component = ord(buf[pos])
-        pos += 1
-        h, w = struct.unpack(">HH", buf[pos:pos+4])
-        pos += 4
-        color_space = ord(buf[pos])
-        break
-    else:
-        pos += int(struct.unpack(">H", buf[pos:pos+2])[0])
+    pos = 0
+    pos += 2
     b = buf[pos]
-    pos = pos + 1
-    
-  return (int(w), int(h), density_type, xres, yres, bits_per_component, color_space)
+    while ord(b) != 0xDA:
+        while ord(b) != 0xFF:
+            b = buf[pos]
+            pos = pos + 1
+        while ord(b) == 0xFF:
+            b = buf[pos]
+            pos = pos + 1
+        if ord(b) >= 0xC0 and ord(b) <= 0xC3:
+            pos += 2
+            bits_per_component = ord(buf[pos])
+            pos += 1
+            h, w = struct.unpack(">HH", buf[pos : pos + 4])
+            pos += 4
+            color_space = ord(buf[pos])
+            break
+        else:
+            pos += int(struct.unpack(">H", buf[pos : pos + 2])[0])
+        b = buf[pos]
+        pos = pos + 1
+
+    return (int(w), int(h), density_type, xres, yres, bits_per_component, color_space)
+
 
 def get_jb2_props(buf):
-  (width, height, xres, yres) = struct.unpack('>IIII', buf[11:27])
-  return (width, height, xres, yres)
+    (width, height, xres, yres) = struct.unpack(">IIII", buf[11:27])
+    return (width, height, xres, yres)
+
 
 def load_image(contents, symd):
-  if contents[6:10] == "JFIF":
-    width, height, density_type, xres, yres, bpc, color_space = get_jpg_props(contents)
+    if contents[6:10] == "JFIF":
+        width, height, density_type, xres, yres, bpc, color_space = get_jpg_props(
+            contents
+        )
 
-    if density_type != 0x01: # Pixels per inch (2.54 cm)
-      raise "wrong density"
-    if color_space == 0x01:
-      color_space_pdf = "/DeviceGray"
-    if color_space == 0x03:
-      color_space_pdf = "/DeviceRGB"
+        if density_type != 0x01:  # Pixels per inch (2.54 cm)
+            raise "wrong density"
+        if color_space == 0x01:
+            color_space_pdf = "/DeviceGray"
+        if color_space == 0x03:
+            color_space_pdf = "/DeviceRGB"
 
-    # sys.stderr.write("JP: %d %s %d %d %s %d %d\n" % (bpc, color_space_pdf, width, height, str(len(contents)), xres, yres))
-    
-    if xres == 0:
-        xres = DPI
-    if yres == 0:
-        yres = DPI
+        # sys.stderr.write("JP: %d %s %d %d %s %d %d\n" % (bpc, color_space_pdf, width, height, str(len(contents)), xres, yres))
 
-    xobj = Obj({'Type': '/XObject', 'Subtype': '/Image',
-        'Width': str(width),
-        'Height': str(height),
-        'ColorSpace': color_space_pdf,
-        'BitsPerComponent': str(bpc),
-        'Length': str(len(contents)),
-        'Filter': '/DCTDecode'}, contents)
+        if xres == 0:
+            xres = DPI
+        if yres == 0:
+            yres = DPI
 
-    return (width, height, xres, yres, xobj)
-  else:
-    (width, height, xres, yres) = get_jb2_props(contents)
+        xobj = Obj(
+            {
+                "Type": "/XObject",
+                "Subtype": "/Image",
+                "Width": str(width),
+                "Height": str(height),
+                "ColorSpace": color_space_pdf,
+                "BitsPerComponent": str(bpc),
+                "Length": str(len(contents)),
+                "Filter": "/DCTDecode",
+            },
+            contents,
+        )
 
-    if xres == 0:
-        xres = DPI
-    if yres == 0:
-        yres = DPI
+        return (width, height, xres, yres, xobj)
+    else:
+        (width, height, xres, yres) = get_jb2_props(contents)
 
-    xobj = Obj({'Type': '/XObject', 'Subtype': '/Image', 'Width':
-        str(width), 'Height': str(height), 'ColorSpace': '/DeviceGray',
-        'BitsPerComponent': '1', 'Filter': '/JBIG2Decode', 'DecodeParms':
-        ' << /JBIG2Globals %d 0 R >>' % symd.id}, contents)
+        if xres == 0:
+            xres = DPI
+        if yres == 0:
+            yres = DPI
 
-    return (width, height, xres, yres, xobj)
+        xobj = Obj(
+            {
+                "Type": "/XObject",
+                "Subtype": "/Image",
+                "Width": str(width),
+                "Height": str(height),
+                "ColorSpace": "/DeviceGray",
+                "BitsPerComponent": "1",
+                "Filter": "/JBIG2Decode",
+                "DecodeParms": " << /JBIG2Globals %d 0 R >>" % symd.id,
+            },
+            contents,
+        )
 
-def main(symboltable='symboltable', pagefiles=glob.glob('page-*')):
-  doc = Doc()
-  doc.add_object(Obj({'Type' : '/Catalog', 'Outlines' : ref(2), 'Pages' : ref(3)}))
-  doc.add_object(Obj({'Type' : '/Outlines', 'Count': '0'}))
-  pages = Obj({'Type' : '/Pages'})
-  doc.add_object(pages)
-  symd = doc.add_object(Obj({}, open(symboltable, 'rb').read()))
-  page_objs = []
+        return (width, height, xres, yres, xobj)
 
-  for p in pagefiles:
-    try:
-      contents = open(p, "rb").read()
-    except IOError:
-      sys.stderr.write("error reading page file %s\n"% p)
-      continue
-    (width, height,xres,yres) = struct.unpack('>IIII', contents[11:27])
-    
-    if xres==0:
-      xres=DPI
-    if yres==0:
-      yres=DPI
 
-    contents = Obj({}, 'q %f 0 0 %f 0 0 cm /Im1 Do Q' % (float(width * 72) / xres, float(height * 72) / yres))
-    resources = Obj({'ProcSet': '[/PDF /ImageB]',
-        'XObject': '<< /Im1 %d 0 R >>' % xobj.id})
-    page = Obj({'Type': '/Page', 'Parent': '3 0 R',
-        'MediaBox': '[ 0 0 %f %f ]' % (float(width * 72) / xres, float(height * 72) / yres),
-        'Contents': ref(contents.id),
-        'Resources': ref(resources.id)})
-    [doc.add_object(x) for x in [xobj, contents, resources, page]]
-    page_objs.append(page)
+def main(symboltable="symboltable", pagefiles=glob.glob("page-*")):
+    doc = Doc()
+    doc.add_object(Obj({"Type": "/Catalog", "Outlines": ref(2), "Pages": ref(3)}))
+    doc.add_object(Obj({"Type": "/Outlines", "Count": "0"}))
+    pages = Obj({"Type": "/Pages"})
+    doc.add_object(pages)
+    symd = doc.add_object(Obj({}, open(symboltable, "rb").read()))
+    page_objs = []
 
-    pages.d.d['Count'] = str(len(page_objs))
-    pages.d.d['Kids'] = '[' + ' '.join([ref(x.id) for x in page_objs]) + ']'
+    for p in pagefiles:
+        try:
+            contents = open(p, "rb").read()
+        except IOError:
+            sys.stderr.write("error reading page file %s\n" % p)
+            continue
+        (width, height, xres, yres) = struct.unpack(">IIII", contents[11:27])
 
-  doc_bytes = doc.get_bytes()
-  if ispy2:
-    print(doc_bytes)
-  elif ispy3:
-    sys.stdout.buffer.write(doc_bytes)
-  else:
-    raise Exception("unexpected python version: %s" % platform.python_version_tuple()[0])
+        if xres == 0:
+            xres = DPI
+        if yres == 0:
+            yres = DPI
+
+        contents = Obj(
+            {},
+            "q %f 0 0 %f 0 0 cm /Im1 Do Q"
+            % (float(width * 72) / xres, float(height * 72) / yres),
+        )
+        resources = Obj(
+            {"ProcSet": "[/PDF /ImageB]", "XObject": "<< /Im1 %d 0 R >>" % xobj.id}
+        )
+        page = Obj(
+            {
+                "Type": "/Page",
+                "Parent": "3 0 R",
+                "MediaBox": "[ 0 0 %f %f ]"
+                % (float(width * 72) / xres, float(height * 72) / yres),
+                "Contents": ref(contents.id),
+                "Resources": ref(resources.id),
+            }
+        )
+        [doc.add_object(x) for x in [xobj, contents, resources, page]]
+        page_objs.append(page)
+
+        pages.d.d["Count"] = str(len(page_objs))
+        pages.d.d["Kids"] = "[" + " ".join([ref(x.id) for x in page_objs]) + "]"
+
+    doc_bytes = doc.get_bytes()
+    if ispy2:
+        print(doc_bytes)
+    elif ispy3:
+        sys.stdout.buffer.write(doc_bytes)
+    else:
+        raise Exception(
+            "unexpected python version: %s" % platform.python_version_tuple()[0]
+        )
 
 
 def usage(script, msg):
-  if msg:
-    sys.stderr.write("%s: %s\n"% (script, msg))
-  sys.stderr.write("Usage: %s [file_basename] > out.pdf\n"% script)
-  sys.exit(1)
+    if msg:
+        sys.stderr.write("%s: %s\n" % (script, msg))
+    sys.stderr.write("Usage: %s [file_basename] > out.pdf\n" % script)
+    sys.exit(1)
 
-if __name__ == '__main__':
-  if ispy2 and sys.platform == "win32":
-    import msvcrt
-    msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
 
-  if len(sys.argv) == 2:
-    if sys.argv[1] == "index":
-      with open('index', 'r') as index:
-        pages = index.read().splitlines()
-      sym = "J.sym"
+if __name__ == "__main__":
+    if ispy2 and sys.platform == "win32":
+        import msvcrt
+
+        msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
+
+    if len(sys.argv) == 2:
+        if sys.argv[1] == "index":
+            with open("index", "r") as index:
+                pages = index.read().splitlines()
+            sym = "J.sym"
+        else:
+            sym = sys.argv[1] + ".sym"
+            pages = glob.glob(sys.argv[1] + ".[0-9]*")
+            pages.sort()
+    elif len(sys.argv) == 1:
+        sym = "symboltable"
+        pages = glob.glob("page-*")
+        pages.sort()
     else:
-      sym = sys.argv[1] + '.sym'
-      pages = glob.glob(sys.argv[1] + '.[0-9]*')
-      pages.sort()
-  elif len(sys.argv) == 1:
-    sym = 'symboltable'
-    pages = glob.glob('page-*')
-    pages.sort()
-  else:
-    usage(sys.argv[0], "wrong number of args!")
+        usage(sys.argv[0], "wrong number of args!")
 
-  if not os.path.exists(sym):
-    usage(sys.argv[0], "symbol table %s not found!"% sym)
-  elif len(pages) == 0:
-    usage(sys.argv[0], "no pages found!")
-    
-  main(sym, pages)
+    if not os.path.exists(sym):
+        usage(sys.argv[0], "symbol table %s not found!" % sym)
+    elif len(pages) == 0:
+        usage(sys.argv[0], "no pages found!")
+
+    main(sym, pages)
