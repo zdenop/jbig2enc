@@ -50,7 +50,7 @@ install(FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/src/jbig2enc.h"
   DESTINATION include/)
 install(FILES
-  "${CMAKE_CURRENT_SOURCE_DIR}/thessalonica-pdf.py"
+  "${CMAKE_CURRENT_SOURCE_DIR}/jbig2pdf.py"
   DESTINATION bin/)
 
 
