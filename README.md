@@ -24,20 +24,26 @@ in Acrobat, though it may well be.
 See the `jbig2enc.h` header for the high level API, or the `jbig2` program for an
 example of usage:
 
-```
+```sh
 $ jbig2 -s -p -v *.jpg && jbig2topdf.py output >out.pdf
+```
+
+or
+
+```sh
+$ jbig2 -p -v my.tif > my.jbig2 && jbig2topdf.py -s my.jbig2 > my.pdf
 ```
 
 to encode jbig2 files for pdf creation.
 If you want to encode an image and then view output first to include in pdf
 
-```
+```sh
 $ jbig2 -s -S -p -v -O out.png *.jpg
 ```
 
 If you want to encode an image as jbig2 (can be view in [STDU Viewer](http://www.stdutility.com/stduviewer.html) on Windows) run:
 
-```
+```sh
 $ jbig2 -s feyn.tif > feyn.jb2
 ```
 
@@ -65,7 +71,7 @@ $ ~/[path]/pdfsizeopt-jb2.sh large.pdf
 
 *Note*: `cat`, `rm` and `dos2unix` tool are part of [git for windows](https://gitforwindows.org/). You can add them to your path with `set PATH=%PATH%;C:\Program Files\Git\usr\bin`. Adjust path `f:\win64` to your leptonica installation.
 
-```
+```sh
 "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" x64
 set INSTALL_DIR=f:\win64
 set INCLUDE_DIR=f:\win64\include
@@ -75,7 +81,7 @@ set PATH=%PATH%;%INSTALL_DIR%\bin
 
 ### Configuration
 
-```
+```sh
 git clone --depth 1 https://github.com/agl/jbig2enc
 cmake -Bbuild -DCMAKE_INSTALL_PREFIX=%INSTALL_DIR% -DCMAKE_PREFIX_PATH=%INSTALL_DIR%
 cmake --build build --config Release
@@ -83,19 +89,18 @@ cmake --build build --config Release
 
 ### Install
 
-```
+```sh
 cmake --build build --config Release --target install
 ```
 
 ### Uninstall
 
-```
+```sh
 cat build/install_manifest.txt | dos2unix | xargs rm
-
 ```
 
 ### Clean
 
-```
+```sh
 rm -r build/*
 ```
