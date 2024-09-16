@@ -57,6 +57,7 @@ usage(const char *argv0) {
   fprintf(stderr, "  -4: upsample 4x before thresholding\n");
   fprintf(stderr, "  -S: remove images from mixed input and save separately\n");
   fprintf(stderr, "  -j --jpeg-output: write images from mixed input as JPEG\n");
+  fprintf(stderr, "  -D --dpi: force dpi\n");
   fprintf(stderr, "  -V --version: version info\n");
   fprintf(stderr, "  -v: be verbose\n");
 }
@@ -217,6 +218,7 @@ main(int argc, char **argv) {
   l_int32 img_fmt = IFF_PNG;
   const char *img_ext = "png";
   bool segment = false;
+  int dpi = 0;
   int i;
 
   #ifdef WIN32
@@ -341,6 +343,24 @@ main(int argc, char **argv) {
       continue;
     }
 
+    if (strcmp(argv[i], "-D") == 0 ||
+        strcmp(argv[i], "--dpi") == 0) {
+      char *endptr;
+      long t_dpi = strtol(argv[i+1], &endptr, 10);
+      if (*endptr) {
+        fprintf(stderr, "Cannot parse int value: %s\n", argv[i+1]);
+        usage(argv[0]);
+        return 1;
+      }
+      if (t_dpi <= 0 || t_dpi > 9600) {
+        fprintf(stderr, "Invalid dpi: (1..9600)\n");
+        return 12;
+      }
+      dpi = (int)t_dpi;
+      i++;
+      continue;
+    }
+
     break;
   }
 
@@ -387,6 +407,11 @@ main(int argc, char **argv) {
       source = pixRead(argv[i]);
     } else {
       source = pixReadTiff(argv[i], subimage++);
+    }
+
+    if (dpi != 0 && source->xres == 0 && source->yres == 0) {
+      source->xres = dpi;
+      source->yres = dpi;
     }
 
     if (!source) return 3;
