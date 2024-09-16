@@ -30,4 +30,4 @@ missing
 ltmain.sh
 
 /build*
-/stduviewer*
+/help/*
