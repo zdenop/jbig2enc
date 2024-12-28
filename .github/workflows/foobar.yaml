@@ -82,7 +82,7 @@ jobs:
 
     - name: '📦 Make zip'
       run: |
-        name=jbig2enc_${{ steps.hash.outputs.sha_short }}_${{matrix.sys}}-windows
+        name=jbig2enc_${{ steps.hash.outputs.sha_short }}-${{matrix.sys}}
         mkdir $name
         cp jbig2topdf.py src/jbig2.exe $name/
         cp /usr/bin/msys-2.0.dll $name/
@@ -93,6 +93,6 @@ jobs:
     - name: '⏫ Upload Build Results'
       uses: actions/upload-artifact@v4
       with:
-        name: package
-        path: jbig2enc_${{ steps.hash.outputs.sha_short }}-windows.zip
+        name: jbig2enc_${{ steps.hash.outputs.sha_short }}-${{matrix.sys}}
+        path: jbig2enc_${{ steps.hash.outputs.sha_short }}-${{matrix.sys}}.zip
         retention-days: 5
