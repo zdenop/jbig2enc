@@ -1,35 +1,23 @@
-name: msys2
+name: C/C++ CI
 
 on:
+  push:
+    branches: [ "master" ]
   pull_request:
-    branches: [ master ]
-  workflow_dispatch:
+    branches: [ "master" ]
 
 jobs:
   build:
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - msystem: MINGW64
-            mingw_package_prefix: mingw-w64-x86_64
 
-    defaults:
-      run:
-        shell: msys2 {0}
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-    - uses: actions/setup-python@v5
-      with:
-        python-version: 'pypy3.12'
-    - uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        msystem: ${{ matrix.msystem }}
-        install: autoconf automake automake-wrapper git libtool make
-    - run: pacman --noconfirm -S ${{ matrix.mingw_package_prefix }}-gcc
-    - run: gcc --version
+    - name: configure
+      run: ./configure
+    - name: make
+      run: make
+    - name: make check
+      run: make check
+    - name: make distcheck
+      run: make distcheck
