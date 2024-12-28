@@ -10,12 +10,12 @@ jobs:
   build:
     runs-on: windows-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - { icon: '🟦', sys: mingw64 }
           - { icon: '🟨', sys: ucrt64  }
-          - { icon: '⬛', sys: mingw32 }
+          # - { icon: '⬛', sys: mingw32 }  error: target not found: mingw-w64-i686-leptonica
     name: 🐜${{ matrix.icon }} ${{ matrix.sys }}
     defaults:
       run:
