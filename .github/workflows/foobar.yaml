@@ -48,7 +48,8 @@ jobs:
 
     - name: '️#️⃣ get-hash'
       id: hash
-      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      run: echo "sha_short=$(git describe --tags)" >> $GITHUB_OUTPUT
+      # run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       # run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
 
     - name: '🔗 Setup jbig2enc'
@@ -57,11 +58,13 @@ jobs:
 
     - name: '🔧 Configure jbig2enc'
       run: |
-           ./configure '--disable-shared' 'CXXFLAGS=-g -O2 -static'
+           # ./configure '--disable-shared' 'CXXFLAGS=-g -O2 -static'
+           ./configure '--disable-shared' 'CXXFLAGS=-g -O2'
 
     - name: '🚧 Build and install jbig2enc'
       run: |
-           make LDFLAGS="-all-static"
+           # make LDFLAGS="-all-static"
+           make
            make install
 
     - name: 'ℹ️ Display version'
