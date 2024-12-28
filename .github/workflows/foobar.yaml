@@ -85,9 +85,9 @@ jobs:
         name=jbig2enc_${{ steps.hash.outputs.sha_short }}-${{matrix.sys}}
         mkdir $name
         cp jbig2topdf.py src/jbig2.exe $name/
-        cp /usr/bin/msys-2.0.dll $name/
-        cp /mingw64/lib/libjbig2enc.la $name/
-        cp /mingw64/lib/libjbig2enc.a $name/
+        # cp /usr/bin/msys-2.0.dll $name/
+        cp /${{matrix.sys}}/lib/libjbig2enc.la $name/
+        cp /${{matrix.sys}}/lib/libjbig2enc.a $name/
         cp AUTHORS ChangeLog COPYING INSTALL NEWS README.md $name/
         zip -r $name.zip $name/
     - name: '⏫ Upload Build Results'
