@@ -1,4 +1,4 @@
-name: Example Msys
+name: Msys2
 
 on:
   push:
@@ -12,12 +12,10 @@ jobs:
   build:
     runs-on: windows-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         include:
-          - { icon: '⬛', sys: mingw32 }
           - { icon: '🟦', sys: mingw64 }
-          - { icon: '🟨', sys: ucrt64  }
     name: 🚧${{ matrix.icon }} ${{ matrix.sys }}
     defaults:
       run:
@@ -38,7 +36,24 @@ jobs:
         install: >-
           git
           make
+          autoconf
+          automake
         pacboy: >-
-          toolchain:p
-          cmake:p
-          ninja:p
+          leptonica:p
+
+    - name: Setup jbig2enc
+      run: |
+           ./autogen.sh
+
+    - name: Configure jbig2enc
+      run: |
+           ./configure '--disable-shared' 'CXX=${{ matrix.config.cxx }}' 'CXXFLAGS=-g -O2'
+
+    - name: Build and install jbig2enc
+      run: |
+           make
+           make install
+
+    - name: Display version
+      run: |
+           jbig2 -v
