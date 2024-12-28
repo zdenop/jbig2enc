@@ -1,3 +1,5 @@
+[![Msys2](https://github.com/zdenop/jbig2enc/actions/workflows/foobar.yaml/badge.svg)](https://github.com/zdenop/jbig2enc/actions/workflows/foobar.yaml)
+
 This is an encoder for [JBIG2](doc/fcd14492.pdf).
 
 JBIG2 encodes bi-level (1 bpp) images using a number of clever tricks to get

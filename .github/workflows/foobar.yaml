@@ -45,7 +45,7 @@ jobs:
           leptonica:p
           gcc:p
 
-    - name: get-hash
+    - name: '️#️⃣ get-hash'
       id: hash
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
 
@@ -71,11 +71,15 @@ jobs:
            jbig2 -a -p -v images/feyn.tif > feyn.jb2
            python3 jbig2topdf.py -s feyn.jb2 > feyn.pdf
 
+    - name: List files in the repository
+      run: |
+           ls -lR ${{ github.workspace }}
+
     - name: '📦 Make zip'
       run: |
         name=jbig2enc_${{ steps.hash.outputs.sha_short }}_${{matrix.sys}}-windows
         mkdir $name
-        cp jbig2topdf.py jbig2.exe $name/
+        cp jbig2topdf.py /mingw64/bin/jbig2.exe $name/
         cp /usr/bin/msys-2.0.dll $name/
         cp /mingw64/lib/libjbig2enc.la $name/
         cp /mingw64/lib/libjbig2enc.a $name/
