@@ -39,8 +39,10 @@ jobs:
           autoconf
           automake
           libtool
+          python3
         pacboy: >-
-          zlib:p
+          zlib-devel:p
+          zlib:x
           leptonica:p
           gcc:p
 
