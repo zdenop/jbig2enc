@@ -60,4 +60,9 @@ jobs:
 
     - name: Display version
       run: |
-           jbig2 -v
+           jbig2 -V
+
+    - name: Run test
+      run: |
+           jbig2 -a -p -v images/feyn.tif > feyn.jb2
+           python3 jbig2topdf.py -s feyn.jb2 > feyn.pdf
