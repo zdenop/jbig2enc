@@ -38,6 +38,7 @@ jobs:
           make
           autoconf
           automake
+          libtool
         pacboy: >-
           leptonica:p
 
