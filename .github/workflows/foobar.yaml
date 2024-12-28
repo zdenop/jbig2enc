@@ -41,6 +41,7 @@ jobs:
           libtool
         pacboy: >-
           leptonica:p
+          gcc:p
 
     - name: Setup jbig2enc
       run: |
@@ -48,7 +49,7 @@ jobs:
 
     - name: Configure jbig2enc
       run: |
-           ./configure '--disable-shared' 'CXX=${{ matrix.config.cxx }}' 'CXXFLAGS=-g -O2'
+           ./configure '--disable-shared' 'CXXFLAGS=-g -O2'
 
     - name: Build and install jbig2enc
       run: |
