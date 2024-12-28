@@ -75,7 +75,8 @@ jobs:
     - name: '🍃 List files in the repository'
       run: |
            # ls -lR ${{ github.workspace }}
-           dir /b /a /s
+           dir /?
+           dir /S
 
     - name: '📦 Make zip'
       run: |
