@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: Msys2-64
 
 on:
   push:
