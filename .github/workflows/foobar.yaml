@@ -57,11 +57,11 @@ jobs:
 
     - name: '🔧 Configure jbig2enc'
       run: |
-           ./configure '--disable-shared' 'CXXFLAGS=-g -O2'
+           ./configure '--disable-shared' 'CXXFLAGS=-g -O2 -static'
 
     - name: '🚧 Build and install jbig2enc'
       run: |
-           make
+           make LDFLAGS="-all-static"
            make install
 
     - name: 'ℹ️ Display version'
@@ -86,6 +86,9 @@ jobs:
         mkdir $name
         cp jbig2topdf.py src/jbig2.exe $name/
         # cp /usr/bin/msys-2.0.dll $name/
+        cp /usr/bin/libstdc++-6.dll $name/
+        cp /usr/bin/libgcc_s_seh-1.dll $name/
+        cp /usr/bin/libleptonica-6.dll $name/
         cp /${{matrix.sys}}/lib/libjbig2enc.la $name/
         cp /${{matrix.sys}}/lib/libjbig2enc.a $name/
         cp AUTHORS ChangeLog COPYING INSTALL NEWS README.md $name/
