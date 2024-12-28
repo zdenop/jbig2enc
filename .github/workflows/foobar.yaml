@@ -40,6 +40,7 @@ jobs:
           automake
           libtool
           python3
+          zip
         pacboy: >-
           zlib:x
           leptonica:p
@@ -83,7 +84,7 @@ jobs:
       run: |
         name=jbig2enc_${{ steps.hash.outputs.sha_short }}_${{matrix.sys}}-windows
         mkdir $name
-        cp jbig2topdf.py /mingw64/bin/jbig2.exe $name/
+        cp jbig2topdf.py src/jbig2.exe $name/
         cp /usr/bin/msys-2.0.dll $name/
         cp /mingw64/lib/libjbig2enc.la $name/
         cp /mingw64/lib/libjbig2enc.a $name/
