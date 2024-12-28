@@ -40,6 +40,7 @@ jobs:
           automake
           libtool
         pacboy: >-
+          zlib:p
           leptonica:p
           gcc:p
 
