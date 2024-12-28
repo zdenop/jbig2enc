@@ -71,7 +71,7 @@ jobs:
            jbig2 -a -p -v images/feyn.tif > feyn.jb2
            python3 jbig2topdf.py -s feyn.jb2 > feyn.pdf
 
-    - name: make zip
+    - name: '📦 Make zip'
       run: |
         name=jbig2enc_${{ steps.hash.outputs.sha_short }}_${{matrix.sys}}-windows
         mkdir $name
@@ -81,8 +81,9 @@ jobs:
         cp /mingw64/lib/libjbig2enc.a $name/
         cp AUTHORS ChangeLog COPYING INSTALL NEWS README.md $name/
         zip -r $name.zip $name/
-    - name: artifact package
-      uses: actions/upload-artifact@v2
+    - name: '⏫ Upload Build Results'
+      uses: actions/upload-artifact@v4
       with:
         name: package
         path: jbig2enc_${{ steps.hash.outputs.sha_short }}-windows.zip
+        retention-days: 5
