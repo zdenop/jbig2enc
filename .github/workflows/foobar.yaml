@@ -41,7 +41,6 @@ jobs:
           libtool
           python3
         pacboy: >-
-          zlib-devel:p
           zlib:x
           leptonica:p
           gcc:p
