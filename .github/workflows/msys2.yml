@@ -1,0 +1,66 @@
+name: msys2
+# msys2 build for jbig2enc - head from master branch.
+
+on:
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - msystem: MINGW64
+            mingw_package_prefix: mingw-w64-x86_64
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 'pypy3.12'
+    - name: '🧰 Checkout'
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: '🟦 Setup MSYS2'
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        msystem: ${{ matrix.msystem }}
+        install: autoconf automake automake-wrapper git libtool make
+    - run: pacman --noconfirm -S ${{ matrix.mingw_package_prefix }}-gcc
+    - run: gcc --version
+
+    - name: '🚧 Install dependencies'
+      run: |
+           pacman --noconfirm -S ${{ matrix.mingw_package_prefix }}-leptonica
+           pacman --noconfirm -S ${{ matrix.mingw_package_prefix }}-pkg-config
+
+    - name: Setup jbig2enc
+      run: |
+           ./autogen.sh
+
+    - name: Configure jbig2enc
+      run: |
+           ./configure '--disable-shared' 'CXX=${{ matrix.config.cxx }}' 'CXXFLAGS=-g -O2'
+
+    - name: Build and install jbig2enc
+      run: |
+           make
+           make install
+
+    - name: Display version
+      run: |
+           jbig2 -v
+
+    - name: Run test
+      run: |
+           jbig2 -a -p -v images/feyn.tif > feyn.jb2
+           python3 jbig2topdf.py -s feyn.jb2 > feyn.pdf
