@@ -1,5 +1,4 @@
 name: msys2
-# msys2 build for jbig2enc - head from master branch.
 
 on:
   pull_request:
@@ -7,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  windows:
+  build:
     runs-on: windows-latest
     strategy:
       fail-fast: false
