@@ -3,8 +3,6 @@ name: Msys2
 on:
   push:
   pull_request:
-  schedule:
-    - cron: '0 0 * * 3'
   workflow_dispatch:
 
 jobs:
@@ -16,7 +14,9 @@ jobs:
       matrix:
         include:
           - { icon: '🟦', sys: mingw64 }
-    name: 🚧${{ matrix.icon }} ${{ matrix.sys }}
+          - { icon: '🟨', sys: ucrt64  }
+          - { icon: '⬛', sys: mingw32 }
+    name: 🐜${{ matrix.icon }} ${{ matrix.sys }}
     defaults:
       run:
         shell: msys2 {0}
@@ -45,24 +45,44 @@ jobs:
           leptonica:p
           gcc:p
 
-    - name: Setup jbig2enc
+    - name: get-hash
+      id: hash
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+    - name: '🔗 Setup jbig2enc'
       run: |
            ./autogen.sh
 
-    - name: Configure jbig2enc
+    - name: '🔧 Configure jbig2enc'
       run: |
            ./configure '--disable-shared' 'CXXFLAGS=-g -O2'
 
-    - name: Build and install jbig2enc
+    - name: '🚧 Build and install jbig2enc'
       run: |
            make
            make install
 
-    - name: Display version
+    - name: 'ℹ️ Display version'
       run: |
            jbig2 -V
 
-    - name: Run test
+    - name: '🏃 Run test'
       run: |
            jbig2 -a -p -v images/feyn.tif > feyn.jb2
            python3 jbig2topdf.py -s feyn.jb2 > feyn.pdf
+
+    - name: make zip
+      run: |
+        name=jbig2enc_${{ steps.hash.outputs.sha_short }}_${{matrix.sys}}-windows
+        mkdir $name
+        cp jbig2topdf.py jbig2.exe $name/
+        cp /usr/bin/msys-2.0.dll $name/
+        cp /mingw64/lib/libjbig2enc.la $name/
+        cp /mingw64/lib/libjbig2enc.a $name/
+        cp AUTHORS ChangeLog COPYING INSTALL NEWS README.md $name/
+        zip -r $name.zip $name/
+    - name: artifact package
+      uses: actions/upload-artifact@v2
+      with:
+        name: package
+        path: jbig2enc_${{ steps.hash.outputs.sha_short }}-windows.zip
