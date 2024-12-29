@@ -19,7 +19,7 @@ jobs:
       matrix:
         include:
           - { icon: '🟦', sys: mingw64 }
-          # - { icon: '🟨', sys: ucrt64  }
+          - { icon: '🟨', sys: ucrt64  }
           # - { icon: '⬛', sys: mingw32 }  error: target not found: mingw-w64-i686-leptonica
     name: 🐜${{ matrix.icon }} ${{ matrix.sys }}
     defaults:
@@ -95,30 +95,14 @@ jobs:
     - name: '📦 Make zip'
       run: |
         name=jbig2enc_${{ steps.hash.outputs.sha_short }}-${{matrix.sys}}
-        mkdir $name
+        mkdir -p $name/{doc,lib}
+        # Copy programs and library
         cp jbig2topdf.py src/jbig2.exe $name/
-        # cp /usr/bin/msys-2.0.dll $name/
-        cp /${{matrix.sys}}/bin/libstdc++-6.dll $name/
-        cp /${{matrix.sys}}/bin/libgcc_s_seh-1.dll $name/
-        cp /${{matrix.sys}}/bin/libleptonica-6.dll $name/
-        cp /${{matrix.sys}}/bin/libpng16-16.dll $name/
-        cp /${{matrix.sys}}/bin/libwebp-7.dll $name/
-        cp /${{matrix.sys}}/bin/libtiff-6.dll $name/
-        cp /${{matrix.sys}}/bin/libjpeg-8.dll $name/
-        cp /${{matrix.sys}}/bin/libwebpmux-3.dll $name/
-        cp /${{matrix.sys}}/bin/libwinpthread-1.dll $name/
-        cp /${{matrix.sys}}/bin/libsharpyuv-0.dll $name/
-        cp /${{matrix.sys}}/bin/libLerc.dll $name/
-        cp /${{matrix.sys}}/bin/liblzma-5.dll $name/
-        cp /${{matrix.sys}}/bin/libgif-7.dll $name/
-        cp /${{matrix.sys}}/bin/libopenjp2-7.dll $name/
-        cp /${{matrix.sys}}/bin/libdeflate.dll $name/
-        cp /${{matrix.sys}}/bin/libjbig-0.dll $name/
-        cp /${{matrix.sys}}/bin/zlib1.dll $name/
-        cp /${{matrix.sys}}/bin/libzstd.dll $name/
-        cp /${{matrix.sys}}/lib/libjbig2enc.la $name/
-        cp /${{matrix.sys}}/lib/libjbig2enc.a $name/
-        cp AUTHORS ChangeLog COPYING INSTALL NEWS README.md $name/
+        cp /${{matrix.sys}}/lib/{libjbig2enc.la,libjbig2enc.a} $name/lib
+        # Copy documentation files
+        cp AUTHORS ChangeLog COPYING INSTALL NEWS README.md doc/jbig2enc.html doc/PATENTS $name/doc
+        # Copy dependancies
+        cp /${{matrix.sys}}/bin/{libstdc++-6.dll,libgcc_s_seh-1.dll,libleptonica-6.dll,libpng16-16.dll,libwebp-7.dll,libjpeg-8.dll,libwebpmux-3.dll,libwinpthread-1.dll,libsharpyuv-0.dll,libtiff-6.dll,libLerc.dll,liblzma-5.dll,libgif-7.dll,libopenjp2-7.dll,libdeflate.dll,libjbig-0.dll,zlib1.dll,libzstd.dll} $name/
         zip -r $name.zip $name/
     - name: '⏫ Upload Build Results'
       uses: actions/upload-artifact@v4
