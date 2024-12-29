@@ -1,6 +1,14 @@
 name: Ruff_python_formater
 
-on: [ push, pull_request ]
+on:
+  push:
+    paths:
+      - *.py
+      - **/*.py
+  pull_request:
+    paths:
+      - *.py
+      - **/*.py
 
 jobs:
   build:
