@@ -47,7 +47,7 @@ jobs:
           python3
           pkg-config
           zip
-          objdump
+          binutils
         pacboy: >-
           zlib:x
           leptonica:p
