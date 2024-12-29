@@ -1,0 +1,84 @@
+AC_PREREQ([2.75])  # Minimum autoconf version is 2.75 now
+
+AC_INIT([jbig2enc],[0.29],[agl@imperialviolet.org],[jbig2enc-0.29],[https://github.com/agl/jbig2enc])
+AC_CONFIG_MACRO_DIR([m4])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])  # Removed no-dependencies, use C++ specific flags
+
+# This check is not needed with modern automake
+# AM_CONDITIONAL([AM_PROG_AR], [AM_PROG_AR])
+
+LT_INIT  # Keep libtool initialization
+
+AC_PROG_CXX
+LT_INIT  # Re-initialize libtool after AC_PROG_CXX
+
+# Release versioning
+GENERIC_MAJOR_VERSION=0
+GENERIC_MINOR_VERSION=29
+GENERIC_MICRO_VERSION=0
+
+# Use macros for versioning with hyphens for consistency
+GENERIC_API_VERSION=$GENERIC_MAJOR_VERSION-$GENERIC_MINOR_VERSION
+GENERIC_LIBRARY_VERSION=$GENERIC_MAJOR_VERSION:$GENERIC_MINOR_VERSION
+AC_SUBST(GENERIC_API_VERSION)
+AC_SUBST(GENERIC_MAJOR_VERSION)
+AC_SUBST(GENERIC_LIBRARY_VERSION)
+
+PACKAGE=$GENERIC_LIBRARY_NAME
+AC_SUBST(GENERIC_LIBRARY_NAME)
+
+GENERIC_VERSION=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION.$GENERIC_MICRO_VERSION
+GENERIC_RELEASE=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION
+AC_SUBST(GENERIC_RELEASE)
+AC_SUBST(GENERIC_VERSION)
+
+# Platform specific setup
+AC_CANONICAL_HOST
+case $host_os in
+  mingw*)
+    AC_DEFINE_UNQUOTED(MINGW,1,[This is a MinGW system])
+    AC_CHECK_LIB(ws2_32, _head_libws2_32_a,,
+        echo "Error! ws2_32 not detected."
+        exit -1)
+    LIBS="$LIBS -lws2_32"
+    ;;
+  *)
+    # Default
+    ;;
+esac
+
+# Disable rpath by default, users can enable it with --enable-rpath
+AC_ARG_ENABLE(rpath,
+  [AS_HELP_STRING([--enable-rpath],[Enable rpath for libraries (NOT RECOMMENDED)])],
+  [enable_rpath="$enableval"], [enable_rpath="no"])
+AC_MSG_RESULT($enable_rpath)
+
+AM_CONDITIONAL([ENABLE_RPATH], [test "x$enable_rpath" = "xyes"])
+
+# Let autoconf handle libtool patching
+AC_CONFIG_COMMANDS([libtool-rpath-patch], [], [])  # Removed the patch code
+
+# Check for Leptonica with pkg-config instead of checking individual functions
+PKG_CHECK_MODULES([LEPT]=leptonica, [findFileFormatStream],, [
+  echo "Error! Leptonica not detected."
+  exit -1
+])
+
+# Check for other libraries with pkg-config
+PKG_CHECK_MODULES([TIFF]=tiff, [TIFFOpen],, [echo "Error! libtiff not detected."])
+PKG_CHECK_MODULES([PNG]=png, [png_read_png],, [echo "Error! libpng not detected."])
+PKG_CHECK_MODULES([JPEG]=jpeg, [jpeg_read_scanlines],, [echo "Error! libjpeg not detected."])
+PKG_CHECK_MODULES([GIF]=gif, [DGifOpenFileHandle],, [echo "Error! libgif not detected."])
+PKG_CHECK_MODULES([WEBP]=webp, [WebPGetInfo],, [echo "Error! libwebp not detected."])
+PKG_CHECK_MODULES([ZLIB]=z, [zlibVersion],, [
+  echo "Error! zlib not detected."
+  exit -1
+])
+PKG_CHECK_MODULES([MATH]=m, [sqrt],, [echo "Error! libm not detected."])
+
+AC_CONFIG_FILES([
+  Makefile
+  src/Makefile
+  doc/Makefile
+])
+AC_OUTPUT

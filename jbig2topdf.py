@@ -20,6 +20,8 @@
 import glob
 import struct
 import sys
+
+
 from pathlib import Path
 
 # This is a very simple script to make a PDF file out of the output of a
@@ -273,5 +275,7 @@ def parse_args(script: str) -> tuple:
 
 
 if __name__ == "__main__":
+    x = 0
     sym, pages = parse_args(sys.argv[0])
     create_pdf(sym, pages)
+        atamac
