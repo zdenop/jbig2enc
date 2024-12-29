@@ -2,6 +2,11 @@ name: Msys2
 
 on:
   push:
+    paths:
+      - src/**
+      - .github/**
+      - configure.ac
+      - Makefile.am
   pull_request:
   workflow_dispatch:
 
@@ -14,7 +19,7 @@ jobs:
       matrix:
         include:
           - { icon: '🟦', sys: mingw64 }
-          - { icon: '🟨', sys: ucrt64  }
+          # - { icon: '🟨', sys: ucrt64  }
           # - { icon: '⬛', sys: mingw32 }  error: target not found: mingw-w64-i686-leptonica
     name: 🐜${{ matrix.icon }} ${{ matrix.sys }}
     defaults:
@@ -40,6 +45,7 @@ jobs:
           automake
           libtool
           python3
+          pkg-config
           zip
         pacboy: >-
           zlib:x
@@ -79,12 +85,13 @@ jobs:
     - name: '🍃 List files in the repository'
       run: |
            ls -lR
-           find /c/ -name "libstdc++-6.dll"
-           find /c/ -name "libgcc_s_seh-1.dll"
-           find /c/ -name "libleptonica-6.dll"
+           # find /c/ -name "libstdc++-6.dll"
+           # find /c/ -name "libgcc_s_seh-1.dll"
+           # find /c/ -name "libleptonica-6.dll"
            # ls -lR ${{ github.workspace }}
            # dir /?
            # dir /S
+           ls -lR /usr/bin
 
     - name: '📦 Make zip'
       run: |
@@ -92,9 +99,20 @@ jobs:
         mkdir $name
         cp jbig2topdf.py src/jbig2.exe $name/
         # cp /usr/bin/msys-2.0.dll $name/
-        # cp /usr/bin/libstdc++-6.dll $name/
-        # cp /usr/bin/libgcc_s_seh-1.dll $name/
-        # cp /usr/bin/libleptonica-6.dll $name/
+        cp /${{matrix.sys}}/bin/libstdc++-6.dll $name/
+        cp /${{matrix.sys}}/bin/libgcc_s_seh-1.dll $name/
+        cp /${{matrix.sys}}/bin/libleptonica-6.dll $name/
+        cp /${{matrix.sys}}/bin/libpng16-16.dll $name/
+        cp /${{matrix.sys}}/bin/libwebp-7.dlll $name/
+        cp /${{matrix.sys}}/bin/libtiff-5.dll $name/
+        cp /${{matrix.sys}}/bin/libjpeg-62.dll $name/
+        cp /${{matrix.sys}}/bin/libgcc_s_seh-1.dll $name/
+        cp /${{matrix.sys}}/bin/libwebpmux-3.dll $name/
+        cp /${{matrix.sys}}/bin/libwinpthread-1.dll $name/
+        cp /${{matrix.sys}}/bin/libsharpyuv-0.dll $name/
+        cp /${{matrix.sys}}/bin/libgif-7.dll $name/
+        cp /${{matrix.sys}}/bin/libssp-0.dll $name/
+        cp /${{matrix.sys}}/bin/zlib1.dll $name/
         cp /${{matrix.sys}}/lib/libjbig2enc.la $name/
         cp /${{matrix.sys}}/lib/libjbig2enc.a $name/
         cp AUTHORS ChangeLog COPYING INSTALL NEWS README.md $name/
