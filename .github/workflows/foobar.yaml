@@ -81,14 +81,14 @@ jobs:
 
     - name: '🍃 List files in the repository'
       run: |
-           ls -lR
+           # ls -lR
            # find /c/ -name "libstdc++-6.dll"
            # find /c/ -name "libgcc_s_seh-1.dll"
            # find /c/ -name "libleptonica-6.dll"
            # ls -lR ${{ github.workspace }}
            # dir /?
            # dir /S
-           ls -lR /${{matrix.sys}}/bin
+           ls -lR /${{matrix.sys}}/bin/*.dll
 
     - name: '📦 Make zip'
       run: |
@@ -101,14 +101,13 @@ jobs:
         cp /${{matrix.sys}}/bin/libleptonica-6.dll $name/
         cp /${{matrix.sys}}/bin/libpng16-16.dll $name/
         cp /${{matrix.sys}}/bin/libwebp-7.dll $name/
-        # cp /${{matrix.sys}}/bin/libtiff-5.dll $name/
-        cp /${{matrix.sys}}/bin/libjpeg-62.dll $name/
-        cp /${{matrix.sys}}/bin/libgcc_s_seh-1.dll $name/
+        cp /${{matrix.sys}}/bin/libtiff-6.dll $name/
+        cp /${{matrix.sys}}/bin/libjpeg-8.dll $name/
         cp /${{matrix.sys}}/bin/libwebpmux-3.dll $name/
         cp /${{matrix.sys}}/bin/libwinpthread-1.dll $name/
         cp /${{matrix.sys}}/bin/libsharpyuv-0.dll $name/
         cp /${{matrix.sys}}/bin/libgif-7.dll $name/
-        cp /${{matrix.sys}}/bin/libssp-0.dll $name/
+        # cp /${{matrix.sys}}/bin/libssp-0.dll $name/
         cp /${{matrix.sys}}/bin/zlib1.dll $name/
         cp /${{matrix.sys}}/lib/libjbig2enc.la $name/
         cp /${{matrix.sys}}/lib/libjbig2enc.a $name/
