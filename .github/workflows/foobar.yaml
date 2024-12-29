@@ -47,6 +47,7 @@ jobs:
           python3
           pkg-config
           zip
+          objdump
         pacboy: >-
           zlib:x
           leptonica:p
@@ -61,8 +62,8 @@ jobs:
     - name: '🔧 Configure jbig2enc'
       run: |
            ./autogen.sh
-           # ./configure '--disable-shared' 'CXXFLAGS=-g -O2 -static'
-           ./configure '--disable-shared' 'CXXFLAGS=-g -O2'
+           ./configure '--disable-shared' 'CXXFLAGS=-g -O2 -static'
+           # ./configure '--disable-shared' 'CXXFLAGS=-g -O2'
 
     - name: '🚧 Build and install jbig2enc'
       run: |
@@ -89,6 +90,7 @@ jobs:
            # dir /?
            # dir /S
            ls -lR /${{matrix.sys}}/bin/*.dll
+           objdump -p src/jbig2.exe | grep "DLL Name:"
 
     - name: '📦 Make zip'
       run: |
@@ -107,7 +109,9 @@ jobs:
         cp /${{matrix.sys}}/bin/libwinpthread-1.dll $name/
         cp /${{matrix.sys}}/bin/libsharpyuv-0.dll $name/
         cp /${{matrix.sys}}/bin/libgif-7.dll $name/
-        # cp /${{matrix.sys}}/bin/libssp-0.dll $name/
+        cp /${{matrix.sys}}/bin/libopenjp2-7.dll $name/
+        cp /${{matrix.sys}}/bin/libdeflate.dll $name/
+        cp /${{matrix.sys}}/bin/libjbig-0.dll $name/
         cp /${{matrix.sys}}/bin/zlib1.dll $name/
         cp /${{matrix.sys}}/lib/libjbig2enc.la $name/
         cp /${{matrix.sys}}/lib/libjbig2enc.a $name/
