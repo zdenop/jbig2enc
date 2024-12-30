@@ -8,10 +8,12 @@
 #
 # All the rest is auto-generated.
 
-# create m4 directory if it not exists
-if [ ! -d m4 ];  then
-	mkdir m4
-fi
+# Function to create the m4 directory if it doesn't exist
+create_m4_directory() {
+    if [ ! -d m4 ]; then
+        mkdir m4
+    fi
+}
 
 # Function to handle errors and exit
 bail_out() {
