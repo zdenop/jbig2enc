@@ -1,10 +1,10 @@
 AC_PREREQ([2.71])
 # Initialize the package
 AC_INIT([jbig2enc],
-        [m4_esyscmd_s([test -d .git && git describe --abbrev=4 2>/dev/null || cat VERSION,
+        [m4_esyscmd_s([test -d .git && git describe --abbrev=4 2>/dev/null || cat VERSION])],
         [agl@imperialviolet.org],
         [jbig2enc],
-        [https://github.com/agl/jbig2enc])c])
+        [https://github.com/agl/jbig2enc])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror no-dependencies])
 
@@ -19,17 +19,18 @@ AC_DEFINE_UNQUOTED([PACKAGE_VERSION], ["${PACKAGE_VERSION}"], [Version number])
 AC_SUBST([PACKAGE_NAME])
 AC_SUBST([PACKAGE_VERSION])
 
-# Release versioning
-AX_SPLIT_VERSION
-GENERIC_MAJOR_VERSION=$(echo "$AX_MAJOR_VERSION" | $SED 's/^[[^0-9]]*//')
-GENERIC_MINOR_VERSION=$AX_MINOR_VERSION
-GENERIC_MICRO_VERSION=`echo "$AX_POINT_VERSION" | $SED 's/^\([[0-9]][[0-9]]*\).*/\1/'`
+
+GENERIC_MAJOR_VERSION=$(echo "$VERSION" | $SED 's/\([[^.]][[^.]]*\).*/\1/')
+GENERIC_MINOR_VERSION=$(echo "$VERSION" | $SED 's/[[^.]][[^.]]*.\([[^.]][[^.]]*\).*/\1/')
+GENERIC_MICRO_VERSION=`echo "$VERSION" | $SED 's/[[^.]][[^.]]*.[[^.]][[^.]]*.\(.*\)/\1/'`
 
 # Define version strings
 GENERIC_VERSION="$GENERICS_MAJOR_VERSION.$GENERICS_MINOR_VERSION.$GENERICS_MICRO_VERSION"
 GENERIC_RELEASE="$GENERICS_MAJOR_VERSION.$GENERICS_MINOR_VERSION"
 AC_SUBST(GENERIC_VERSION)
 AC_SUBST(GENERIC_RELEASE)
+
+LT_INIT
 
 # Conditional for MinGW
 AM_CONDITIONAL(MINGW, false)
