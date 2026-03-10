@@ -516,6 +516,9 @@ main(int argc, char **argv) {
         pixt = pixThresholdToBinary(adapt, bw_threshold);
       }
       pixDestroy(&adapt);
+      if (!segment) {
+        pixDestroy(&pixl);
+      }
     } else {
       pixt = pixClone(pixl);
       pixDestroy(&pixl);
@@ -552,8 +555,6 @@ main(int argc, char **argv) {
         continue;
       }
     }
-
-    pixDestroy(&pixl);
 
     if (!symbol_mode) {
       int length;
