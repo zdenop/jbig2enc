@@ -518,6 +518,7 @@ main(int argc, char **argv) {
       pixDestroy(&adapt);
     } else {
       pixt = pixClone(pixl);
+      pixDestroy(&pixl);
     }
     if (!pixt) {
       fprintf(stderr, "Failed to convert input image to binary\n");
