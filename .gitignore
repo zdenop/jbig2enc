@@ -32,4 +32,6 @@ install-sh
 *.in
 missing
 ltmain.sh
+ar-lib
+compile
 build*
