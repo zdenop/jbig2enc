@@ -24,23 +24,17 @@ Usage:
     python jbig2topdf.py output > out.pdf
 """
 
-from __future__ import annotations
-
 import glob
-
-import sys
-
-from dataclasses import dataclass, field
-
-from typing import ClassVar
-
 import struct
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import ClassVar
 
 DEFAULT_DPI = 72
 PAGE_HEADER_SEGMENT_OFFSET = slice(11, 27)
 PAGE_HEADER_FORMAT = ">IIII"  # width, height, xres, yres (big-endian unsigned ints)
 
-from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # PDF primitives
@@ -107,7 +101,9 @@ class PdfDoc:
         self._objects.append(obj)
         return obj
 
-    def _new(self, d: dict[str, str] | None = None, stream: bytes | None = None) -> PdfObj:
+    def _new(
+        self, d: dict[str, str] | None = None, stream: bytes | None = None
+    ) -> PdfObj:
         return self._add(PdfObj(d=d or {}, stream=stream))
 
     # ------------------------------------------------------------------
@@ -143,8 +139,8 @@ class PdfDoc:
         xobj = self._new(xobj_d, image_data)
 
         # Content stream: scale image to page size
-        content_stream = (
-            f"q {pt_w:.6f} 0 0 {pt_h:.6f} 0 0 cm /Im1 Do Q".encode("latin-1")
+        content_stream = f"q {pt_w:.6f} 0 0 {pt_h:.6f} 0 0 cm /Im1 Do Q".encode(
+            "latin-1"
         )
         contents_obj = self._new({}, content_stream)
 
@@ -200,8 +196,7 @@ class PdfDoc:
         write("".join(xref_lines).encode("latin-1"))
 
         trailer = (
-            f"trailer\n<< /Size {n}\n/Root 1 0 R >>\n"
-            f"startxref\n{xref_pos}\n%%EOF\n"
+            f"trailer\n<< /Size {n}\n/Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n"
         )
         write(trailer.encode("latin-1"))
 
@@ -212,6 +207,7 @@ class PdfDoc:
 # Core conversion logic
 # ---------------------------------------------------------------------------
 
+
 def _read_bytes(path: Path, label: str) -> bytes | None:
     """Reads a file and returns its bytes, or logs an error and returns None."""
     try:
@@ -219,6 +215,7 @@ def _read_bytes(path: Path, label: str) -> bytes | None:
     except OSError as exc:
         sys.stderr.write(f"Error reading {label} '{path}': {exc}\n")
         return None
+
 
 def _parse_page_header(data: bytes, path: Path) -> tuple[int, int, int, int] | None:
     """Extracts (width, height, xres, yres) from a JBIG2 page segment header."""
@@ -228,7 +225,10 @@ def _parse_page_header(data: bytes, path: Path) -> tuple[int, int, int, int] | N
         sys.stderr.write(f"Error parsing JBIG2 header in '{path}': {exc}\n")
         return None
 
-def create_pdf(symbol_table: str = "symboltable", page_files: list[str] | None = None) -> None:
+
+def create_pdf(
+    symbol_table: str = "symboltable", page_files: list[str] | None = None
+) -> None:
     """Builds a PDF from a JBIG2 symbol table and page files, writing to stdout."""
     page_paths = sorted(Path(p) for p in (page_files or glob.glob("page-*")))
 
@@ -237,7 +237,9 @@ def create_pdf(symbol_table: str = "symboltable", page_files: list[str] | None =
     doc = PdfDoc()
 
     # Fixed-layout objects: catalog (id=1), outlines (id=2), pages (id=3).
-    catalog = doc._new({"Type": "/Catalog", "Outlines": _pdf_ref(2), "Pages": _pdf_ref(3)})
+    catalog = doc._new(
+        {"Type": "/Catalog", "Outlines": _pdf_ref(2), "Pages": _pdf_ref(3)}
+    )
     outlines = doc._new({"Type": "/Outlines", "Count": "0"})  # noqa: F841
     pages_obj = doc._new({"Type": "/Pages"})
 
@@ -258,16 +260,20 @@ def create_pdf(symbol_table: str = "symboltable", page_files: list[str] | None =
     page_objs: list[PdfObj] = []
     for path in page_paths:
         data = _read_bytes(path, "page file")
-        if data is None: continue
+        if data is None:
+            continue
 
         header = _parse_page_header(data, path)
-        if header is None: continue
+        if header is None:
+            continue
 
         width, height, xres, yres = header
         xres = xres or DEFAULT_DPI
         yres = yres or DEFAULT_DPI
 
-        page = doc.add_page(data, width, height, xres, yres, globals_ref, pages_obj.obj_id)
+        page = doc.add_page(
+            data, width, height, xres, yres, globals_ref, pages_obj.obj_id
+        )
         page_objs.append(page)
 
     # Update /Pages Kids and Count now that all pages are known
@@ -280,6 +286,7 @@ def create_pdf(symbol_table: str = "symboltable", page_files: list[str] | None =
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _usage(script: str, msg: str = "") -> None:
     if msg:
