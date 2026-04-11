@@ -1,5 +1,5 @@
 AC_PREREQ([2.71])
-AC_INIT([jbig2enc],[0.30],[agl@imperialviolet.org],[jbig2enc-0.30],[https://github.com/agl/jbig2enc])
+AC_INIT([jbig2enc],[0.31],[agl@imperialviolet.org],[jbig2enc-0.31],[https://github.com/agl/jbig2enc])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign no-dependencies])
 
