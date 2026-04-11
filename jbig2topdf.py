@@ -14,122 +14,166 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""JBIG2 to PDF converter.
-
-Converts output from the JBIG2 encoder (https://github.com/agl/jbig2enc)
-into a valid PDF document.
-
-Usage:
-    ./jbig2 -s -p <options> image1.jpeg image2.jpeg ...
-    python jbig2topdf.py output > out.pdf
-"""
-
-from __future__ import annotations
+# JBIG2 Encoder
+# https://github.com/agl/jbig2enc
 
 import glob
-
-import sys
-
-from dataclasses import dataclass, field
-
-from typing import ClassVar
-
 import struct
-
-DEFAULT_DPI = 72
-PAGE_HEADER_SEGMENT_OFFSET = slice(11, 27)
-PAGE_HEADER_FORMAT = ">IIII"  # width, height, xres, yres (big-endian unsigned ints)
-
+import sys
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# PDF primitives
-# ---------------------------------------------------------------------------
+# This is a very simple script to make a PDF file out of the output of a
+# multipage symbol compression.
+# Run ./jbig2 -s -p <other options> image1.jpeg image1.jpeg ...
+# python jbig2topdf.py output > out.pdf
 
 
-def _pdf_ref(obj_id: int) -> str:
-    """Returns an indirect object reference string."""
-    return f"{obj_id} 0 R"
+dpi = 72  # Default DPI value
 
 
-def _pdf_dict(values: dict[str, str]) -> str:
-    """Serialises a Python dict to a PDF dictionary literal."""
-    entries = " ".join(f"/{k} {v}" for k, v in values.items())
-    return f"<< {entries} >>\n"
+class Ref:
+    def __init__(self, x: int):
+        self.x = x
+
+    def __str__(self) -> str:
+        return f"{self.x} 0 R"
 
 
-@dataclass
-class PdfObj:
-    """A single PDF indirect object."""
+class Dict:
+    def __init__(self, values: dict = None):
+        if values is None:
+            values = {}
+        self.d = values.copy()
 
-    _id_counter: ClassVar[int] = 1
+    def __str__(self) -> str:
+        entries = [f"/{key} {value}" for key, value in self.d.items()]
+        return f"<< {' '.join(entries)} >>\n"
 
-    d: dict[str, str] = field(default_factory=dict)
-    stream: bytes | None = None
-    obj_id: int = field(init=False)
 
-    def __post_init__(self) -> None:
-        self.obj_id = PdfObj._id_counter
-        PdfObj._id_counter += 1
+class Obj:
+    next_id = 1
+
+    def __init__(self, d: dict = None, stream: str = None):
+        if d is None:
+            d = {}
+        if stream is not None:
+            d["Length"] = str(len(stream))
+        self.d = Dict(d)
+        self.stream = stream
+        self.id = Obj.next_id
+        Obj.next_id += 1
+
+    def __str__(self) -> str:
+        result = [str(self.d)]
         if self.stream is not None:
-            self.d["Length"] = str(len(self.stream))
-
-    @property
-    def ref(self) -> str:
-        return _pdf_ref(self.obj_id)
-
-    def serialise(self) -> bytes:
-        """Returns the object serialised as raw bytes."""
-        parts: list[bytes] = [_pdf_dict(self.d).encode("latin-1")]
-        if self.stream is not None:
-            parts += [b"stream\n", self.stream, b"\nendstream\n"]
-        parts.append(b"endobj\n")
-        return b"".join(parts)
+            result.append(f"stream\n{self.stream}\nendstream\n")
+        result.append("endobj\n")
+        return "".join(result)
 
 
-# ---------------------------------------------------------------------------
-# PDF document
-# ---------------------------------------------------------------------------
+class Doc:
+    def __init__(self):
+        self.objs = []
+        self.pages = []
 
-
-class PdfDoc:
-    """Builds a minimal, spec-compliant PDF document."""
-
-    def __init__(self) -> None:
-        self._objects: list[PdfObj] = []
-        self._pages: list[PdfObj] = []
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
-    def _add(self, obj: PdfObj) -> PdfObj:
-        self._objects.append(obj)
+    def add_object(self, obj: Obj) -> Obj:
+        """Adds an object to the document."""
+        self.objs.append(obj)
         return obj
 
-    def _new(self, d: dict[str, str] | None = None, stream: bytes | None = None) -> PdfObj:
-        return self._add(PdfObj(d=d or {}, stream=stream))
+    def add_page(self, page: Obj) -> Obj:
+        """Adds a page to the document and the list of objects."""
+        self.pages.append(page)
+        return self.add_object(page)
 
-    # ------------------------------------------------------------------
-    # Page construction
-    # ------------------------------------------------------------------
+    def __str__(self) -> str:
+        output = []
+        offsets = []
+        current_offset = 0
 
-    def add_page(
-        self,
-        image_data: bytes,
-        width: int,
-        height: int,
-        xres: int,
-        yres: int,
-        globals_ref: str | None,
-        pages_id: int,
-    ) -> PdfObj:
-        """Creates and registers all objects needed for one page."""
-        pt_w = width * 72 / xres
-        pt_h = height * 72 / yres
+        def add_line(line: str):
+            nonlocal current_offset
+            output.append(line)
+            current_offset += len(line) + 1  # Adding 1 for the newline character
 
-        # Image XObject
-        xobj_d: dict[str, str] = {
+        # PDF header
+        add_line("%PDF-1.4")
+
+        # Add each object and track its byte offset
+        for obj in self.objs:
+            offsets.append(current_offset)
+            add_line(f"{obj.id} 0 obj")
+            add_line(str(obj))
+
+        # Cross-reference table
+        xref_start = current_offset
+        add_line("xref")
+        add_line(f"0 {len(offsets) + 1}")
+        add_line("0000000000 65535 f ")
+        for offset in offsets:
+            add_line(f"{offset:010} 00000 n ")
+
+        # Trailer and EOF
+        add_line("trailer")
+        add_line(f"<< /Size {len(offsets) + 1}\n/Root 1 0 R >>")
+        add_line("startxref")
+        add_line(str(xref_start))
+        add_line("%%EOF")
+
+        return "\n".join(output)
+
+
+def ref(x: int) -> str:
+    """Creates a PDF reference string."""
+    return f"{x} 0 R"
+
+
+def create_pdf(symboltable: str = "symboltable", pagefiles: list = None):
+    """Creates a PDF document from a symbol table and a list of page files."""
+    pagefiles = pagefiles or glob.glob("page-*")
+    doc = Doc()
+
+    # Add catalog and outlines objects
+    catalog_obj = Obj({"Type": "/Catalog", "Outlines": ref(2), "Pages": ref(3)})
+    outlines_obj = Obj({"Type": "/Outlines", "Count": "0"})
+    pages_obj = Obj({"Type": "/Pages"})
+
+    doc.add_object(catalog_obj)
+    doc.add_object(outlines_obj)
+    doc.add_object(pages_obj)
+
+    # Read symbol table if it exists
+    symd = None
+    if symboltable:
+        try:
+            sym_file = Path(symboltable).read_bytes()
+            symd = doc.add_object(Obj({}, sym_file.decode("latin1")))
+        except IOError:
+            sys.stderr.write(f"Error reading symbol table: {symboltable}\n")
+            return
+
+    page_objs = []
+    pagefiles.sort()
+
+    for p in pagefiles:
+        try:
+            contents = Path(p).read_bytes()
+        except IOError:
+            sys.stderr.write(f"Error reading page file: {p}\n")
+            continue
+
+        try:
+            width, height, xres, yres = struct.unpack(">IIII", contents[11:27])
+        except struct.error:
+            sys.stderr.write(f"Error unpacking page file: {p}\n")
+            continue
+
+        # Set default resolution if missing
+        xres = xres or dpi
+        yres = yres or dpi
+
+        # Create XObject (image) for the page
+        lexicon = {
             "Type": "/XObject",
             "Subtype": "/Image",
             "Width": str(width),
@@ -138,195 +182,96 @@ class PdfDoc:
             "BitsPerComponent": "1",
             "Filter": "/JBIG2Decode",
         }
-        if globals_ref:
-            xobj_d["DecodeParms"] = f"<< /JBIG2Globals {globals_ref} >>"
-        xobj = self._new(xobj_d, image_data)
-
-        # Content stream: scale image to page size
-        content_stream = (
-            f"q {pt_w:.6f} 0 0 {pt_h:.6f} 0 0 cm /Im1 Do Q".encode("latin-1")
-        )
-        contents_obj = self._new({}, content_stream)
-
-        # Resource dictionary
-        resources_obj = self._new(
-            {
-                "ProcSet": "[/PDF /ImageB]",
-                "XObject": f"<< /Im1 {xobj.ref} >>",
-            }
+        if symd:
+            lexicon["DecodeParms"] = f"<< /JBIG2Globals {symd.id} 0 R >>"
+        xobj = Obj(
+            lexicon,
+            contents.decode("latin1"),
         )
 
-        # Page object
-        page_obj = self._new(
+        # Create content stream for the page
+        contents_obj = Obj(
+            {},
+            f"q {float(width * 72) / xres} 0 0 {float(height * 72) / yres} 0 0 cm /Im1 Do Q",
+        )
+
+        # Create resource dictionary for the page
+        resources_obj = Obj(
+            {"ProcSet": "[/PDF /ImageB]", "XObject": f"<< /Im1 {xobj.id} 0 R >>"}
+        )
+
+        # Create the page object
+        page_obj = Obj(
             {
                 "Type": "/Page",
-                "Parent": _pdf_ref(pages_id),
-                "MediaBox": f"[ 0 0 {pt_w:.6f} {pt_h:.6f} ]",
-                "Contents": contents_obj.ref,
-                "Resources": resources_obj.ref,
+                "Parent": "3 0 R",
+                "MediaBox": f"[ 0 0 {float(width * 72) / xres} {float(height * 72) / yres} ]",
+                "Contents": ref(contents_obj.id),
+                "Resources": ref(resources_obj.id),
             }
         )
-        self._pages.append(page_obj)
-        return page_obj
 
-    # ------------------------------------------------------------------
-    # Serialisation
-    # ------------------------------------------------------------------
+        # Add objects to the document
+        for obj in (xobj, contents_obj, resources_obj, page_obj):
+            doc.add_object(obj)
 
-    def to_bytes(self) -> bytes:
-        """Serialises the complete PDF document to bytes."""
-        buf: list[bytes] = []
-        offsets: list[int] = []
-        pos = 0
+        page_objs.append(page_obj)
 
-        def write(data: bytes) -> None:
-            nonlocal pos
-            buf.append(data)
-            pos += len(data)
+        # Update pages object
+        pages_obj.d.d["Count"] = str(len(page_objs))
+        pages_obj.d.d["Kids"] = "[" + " ".join([ref(x.id) for x in page_objs]) + "]"
 
-        write(b"%PDF-1.4\n")
-
-        for obj in self._objects:
-            offsets.append(pos)
-            header = f"{obj.obj_id} 0 obj\n".encode("latin-1")
-            write(header)
-            write(obj.serialise())
-            write(b"\n")
-
-        xref_pos = pos
-        n = len(offsets) + 1
-        xref_lines = [f"xref\n0 {n}\n0000000000 65535 f \n"]
-        xref_lines += [f"{off:010d} 00000 n \n" for off in offsets]
-        write("".join(xref_lines).encode("latin-1"))
-
-        trailer = (
-            f"trailer\n<< /Size {n}\n/Root 1 0 R >>\n"
-            f"startxref\n{xref_pos}\n%%EOF\n"
-        )
-        write(trailer.encode("latin-1"))
-
-        return b"".join(buf)
+    # Output the final PDF document to stdout
+    sys.stdout.buffer.write(str(doc).encode("latin1"))
 
 
-# ---------------------------------------------------------------------------
-# Core conversion logic
-# ---------------------------------------------------------------------------
-
-def _read_bytes(path: Path, label: str) -> bytes | None:
-    """Reads a file and returns its bytes, or logs an error and returns None."""
-    try:
-        return path.read_bytes()
-    except OSError as exc:
-        sys.stderr.write(f"Error reading {label} '{path}': {exc}\n")
-        return None
-
-def _parse_page_header(data: bytes, path: Path) -> tuple[int, int, int, int] | None:
-    """Extracts (width, height, xres, yres) from a JBIG2 page segment header."""
-    try:
-        return struct.unpack(PAGE_HEADER_FORMAT, data[PAGE_HEADER_SEGMENT_OFFSET])
-    except struct.error as exc:
-        sys.stderr.write(f"Error parsing JBIG2 header in '{path}': {exc}\n")
-        return None
-
-def create_pdf(symbol_table: str = "symboltable", page_files: list[str] | None = None) -> None:
-    """Builds a PDF from a JBIG2 symbol table and page files, writing to stdout."""
-    page_paths = sorted(Path(p) for p in (page_files or glob.glob("page-*")))
-
-    # Reset the global object ID counter for repeatable/testable output.
-    PdfObj._id_counter = 1
-    doc = PdfDoc()
-
-    # Fixed-layout objects: catalog (id=1), outlines (id=2), pages (id=3).
-    catalog = doc._new({"Type": "/Catalog", "Outlines": _pdf_ref(2), "Pages": _pdf_ref(3)})
-    outlines = doc._new({"Type": "/Outlines", "Count": "0"})  # noqa: F841
-    pages_obj = doc._new({"Type": "/Pages"})
-
-    assert catalog.obj_id == 1, "Catalog must be object 1"
-    assert pages_obj.obj_id == 3, "Pages must be object 3"
-
-    # Optional global symbol table
-    globals_ref: str | None = None
-    if symbol_table:
-        sym_path = Path(symbol_table)
-        sym_data = _read_bytes(sym_path, "symbol table")
-        if sym_data is None:
-            return
-        symd = doc._new({}, sym_data)
-        globals_ref = symd.ref
-
-    # Process each page
-    page_objs: list[PdfObj] = []
-    for path in page_paths:
-        data = _read_bytes(path, "page file")
-        if data is None: continue
-
-        header = _parse_page_header(data, path)
-        if header is None: continue
-
-        width, height, xres, yres = header
-        xres = xres or DEFAULT_DPI
-        yres = yres or DEFAULT_DPI
-
-        page = doc.add_page(data, width, height, xres, yres, globals_ref, pages_obj.obj_id)
-        page_objs.append(page)
-
-    # Update /Pages Kids and Count now that all pages are known
-    pages_obj.d["Count"] = str(len(page_objs))
-    pages_obj.d["Kids"] = "[" + " ".join(p.ref for p in page_objs) + "]"
-
-    sys.stdout.buffer.write(doc.to_bytes())
-
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
-def _usage(script: str, msg: str = "") -> None:
+def usage(script, msg):
+    """Display usage information and an optional error message."""
     if msg:
         sys.stderr.write(f"{script}: {msg}\n")
-    sys.stderr.write(
-        f"""
+    sys.stderr.write(f"""
 Usage:
   {script} [basename] > out.pdf
   {script} -s [page.jb2]... > out.pdf
 
-  Read symbol table from `basename.sym` and pages from `basename.[0-9]*`.
-  If basename is omitted: symbol table from `symboltable`, pages from `page-*`.
+  Read symbol table from `basename.sym` and pages from `basename.[0-9]*`
+    if basename not given: symbol table from `symboltable`, pages from `page-*`
 
-  -s  Standalone mode — no global symbol table.
-"""
-    )
+  -s: standalone mode (no global symbol table)
+""")
     sys.exit(1)
 
 
-def _parse_args(argv: list[str]) -> tuple[str, list[str]]:
-    """Returns (symbol_table_path, page_file_list)."""
-    script = argv[0]
-    args = argv[1:]
+def validate_file_exists(file_path: str, script: str, error_msg: str) -> None:
+    """Validates that a file exists, otherwise exits with usage error."""
+    if not Path(file_path).exists():
+        usage(script, error_msg)
 
-    if "-s" in args:
-        pages = [a for a in args if a != "-s"]
+
+def parse_args(script: str) -> tuple:
+    """Parses command-line arguments and returns the symbol table and page files."""
+    if "-s" in sys.argv:
+        # Standalone mode, no global symbol table
+        pages = [arg for arg in sys.argv[1:] if arg != "-s"]
         return "", pages
+    elif len(sys.argv) == 2:
+        base_name = sys.argv[1]
+        sym = f"{base_name}.sym"
+        pages = glob.glob(f"{base_name}.[0-9]*")
+    elif len(sys.argv) == 1:
+        sym = "symboltable"
+        pages = glob.glob("page-*")
+    else:
+        usage(script, "wrong number of arguments!")
 
-    match len(args):
-        case 0:
-            sym = "symboltable"
-            pages = glob.glob("page-*")
-        case 1:
-            base = args[0]
-            sym = f"{base}.sym"
-            pages = glob.glob(f"{base}.[0-9]*")
-        case _:
-            _usage(script, "wrong number of arguments!")
-
-    if not Path(sym).exists():
-        _usage(script, f"symbol table '{sym}' not found!")
+    # Validate that the symbol table and pages exist
+    validate_file_exists(sym, script, f"symbol table '{sym}' not found!")
     if not pages:
-        _usage(script, "no pages found!")
+        usage(script, "no pages found!")
 
     return sym, pages
 
 
 if __name__ == "__main__":
-    sym, pages = _parse_args(sys.argv)
+    sym, pages = parse_args(sys.argv[0])
     create_pdf(sym, pages)
