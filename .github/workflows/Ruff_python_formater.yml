@@ -32,7 +32,7 @@ jobs:
 
       - name: Get changed Python files
         id: changed-py-files
-        uses: uses: step-security/changed-files@2e07db73e5ccdb319b9a6c7766bd46d39d304bad  # v47.0.5
+        uses: step-security/changed-files@2e07db73e5ccdb319b9a6c7766bd46d39d304bad  # v47.0.5
         with:
           files: |
             *.py
@@ -54,4 +54,3 @@ jobs:
         if: steps.changed-py-files.outputs.any_changed == 'true'
         run: |
           ruff format --check --diff ${{ steps.changed-py-files.outputs.all_changed_files }}
-
