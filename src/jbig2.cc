@@ -488,12 +488,13 @@ main(int argc, char **argv) {
       source = pixReadTiff(argv[i], subimage++);
     }
 
+    if (!source) return 3;
+
     if (dpi != 0 && source->xres == 0 && source->yres == 0) {
       source->xres = dpi;
       source->yres = dpi;
     }
 
-    if (!source) return 3;
     if (verbose)
       pixInfo(source, "source image:");
 
