@@ -443,9 +443,9 @@ jbig2enc_textregion(struct jbig2enc_ctx *restrict ctx,
              (uint8_t *) source->pix[sym]->data, targetw, targeth,
              deltax, -deltay);
 
-          pixDestroy(&symbol);
           curs += targetw - 1;
         }
+        pixDestroy(&symbol);
       } else {
         // update curs given the width of the bitmap
         curs += (S(assigned)->w - (unborder_symbols ? 2*kBorderSize : 0)) - 1;
