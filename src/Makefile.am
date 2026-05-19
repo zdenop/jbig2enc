@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -Wall
+AM_CXXFLAGS = $(JBIG2ENC_CXX17_FLAG) -Wall
 AM_LDFLAGS = -Wl,-E
 
 lib_LTLIBRARIES = libjbig2enc.la

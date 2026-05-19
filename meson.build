@@ -6,7 +6,7 @@ project(
     version: run_command('meson-support' / 'version.sh', 'get-vcs', check: true).stdout().strip(),
     meson_version: '>= 1.10.0',
     default_options: {
-        'cpp_std': 'c++14',
+        'cpp_std': 'c++17',
         'warning_level': '3',
         'b_ndebug': 'if-release',
         'buildtype': 'debugoptimized',
