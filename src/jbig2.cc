@@ -80,6 +80,13 @@ usage(const char *argv0) {
 
 static bool verbose = false;
 
+static bool
+require_arg(int argc, char **argv, int i) {
+  if (i + 1 < argc) return true;
+  fprintf(stderr, "Missing argument for %s\n", argv[i]);
+  usage(argv[0]);
+  return false;
+}
 
 static void
 pixInfo(PIX *pix, const char *msg) {
@@ -264,6 +271,7 @@ main(int argc, char **argv) {
 
     if (strcmp(argv[i], "-b") == 0 ||
         strcmp(argv[i], "--basename") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       basename = argv[i+1];
       i++;
       continue;
@@ -307,6 +315,7 @@ main(int argc, char **argv) {
     }
 
     if (strcmp(argv[i], "-O") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       output_threshold_image = argv[i+1];
       i++;
       continue;
@@ -325,6 +334,7 @@ main(int argc, char **argv) {
     }
 
     if (strcmp(argv[i], "-t") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       char *endptr;
       threshold = strtod(argv[i+1], &endptr);
       if (*endptr) {
@@ -345,6 +355,7 @@ main(int argc, char **argv) {
      }
 
     if (strcmp(argv[i], "-w") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       char *endptr;
       weight = strtod(argv[i+1], &endptr);
       if (*endptr) {
@@ -374,6 +385,7 @@ main(int argc, char **argv) {
 
     // If a BW threshold value is requested, overwrite the default value.
     if (strcmp(argv[i], "-T") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       char *endptr;
       bw_threshold = strtol(argv[i+1], &endptr, 10);
       if (*endptr) {
@@ -409,6 +421,7 @@ main(int argc, char **argv) {
 
     if (strcmp(argv[i], "-D") == 0 ||
         strcmp(argv[i], "--dpi") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       char *endptr;
       long t_dpi = strtol(argv[i+1], &endptr, 10);
       if (*endptr) {
