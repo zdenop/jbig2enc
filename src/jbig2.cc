@@ -37,7 +37,7 @@
 
 #include "jbig2enc.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define WINBINARY O_BINARY
 #else
 #define WINBINARY 0
@@ -231,7 +231,7 @@ main(int argc, char **argv) {
   int dpi = 0;
   int i;
 
-  #ifdef WIN32
+  #if defined(_WIN32)
     int result = _setmode(_fileno(stdout), _O_BINARY);
     if (result == -1)
       fprintf(stderr, "Cannot set mode to binary for stdout\n");
