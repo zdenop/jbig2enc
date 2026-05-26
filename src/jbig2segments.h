@@ -19,7 +19,7 @@
 #define THIRD_PARTY_JBIG2ENC_JBIG2SEGMENTS_H__
 
 #include <vector>
-#ifdef WIN32
+#if defined(_WIN32)
 #include <winsock2.h>
 #else
 #include <netinet/in.h>
@@ -28,7 +28,7 @@
 // -----------------------------------------------------------------------------
 // See comments in jbig2structs.h about the bit packing in this structure.
 // -----------------------------------------------------------------------------
-#if defined(WIN32)
+#if defined(_WIN32)
 #pragma pack(1)
 #endif
 struct jbig2_segment {
@@ -51,7 +51,7 @@ struct jbig2_segment {
   unsigned char retain_bits : 5;
 #endif
 }
-#if defined(WIN32)
+#if defined(_WIN32)
 ;
 #pragma pack()
 #else

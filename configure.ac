@@ -9,6 +9,30 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 LT_INIT
 
 AC_PROG_CXX
+AC_LANG_PUSH([C++])
+AC_MSG_CHECKING([for C++17 compiler flag])
+saved_CXXFLAGS=$CXXFLAGS
+JBIG2ENC_CXX17_FLAG=
+for flag in -std=c++17 -std=c++1z; do
+	CXXFLAGS="$saved_CXXFLAGS $flag"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM([[#if __cplusplus < 201703L
+#error C++17 support is required
+#endif
+#include <array>
+#include <optional>
+		]], [[std::array<int, 1> a{{1}}; std::optional<int> v = a[0];]])],
+		[JBIG2ENC_CXX17_FLAG=$flag; break],
+		[])
+done
+CXXFLAGS=$saved_CXXFLAGS
+if test "x$JBIG2ENC_CXX17_FLAG" = x; then
+	AC_MSG_RESULT([not found])
+	AC_MSG_ERROR([A compiler with C++17 support is required])
+fi
+AC_MSG_RESULT([$JBIG2ENC_CXX17_FLAG])
+AC_SUBST([JBIG2ENC_CXX17_FLAG])
+AC_LANG_POP([C++])
 LT_INIT
 
 # Release versioning

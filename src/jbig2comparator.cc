@@ -22,14 +22,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef _MSC_VER
+#if defined(_WIN32) && (defined(_MSC_VER) || defined(__MINGW32__))
 #define _USE_MATH_DEFINES
-#include <math.h>
 #endif
+#include <cmath>
 
 #include <leptonica/allheaders.h>
 
-#include <math.h>
 #if defined(sun)
 #include <sys/types.h>
 #else

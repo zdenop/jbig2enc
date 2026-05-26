@@ -34,7 +34,7 @@
 #include "leptonica/array_internal.h"
 #endif
 
-#include <math.h>
+#include <cmath>
 
 #define S(i) symbols->pix[i]
 
@@ -273,7 +273,6 @@ jbig2enc_textregion(struct jbig2enc_ctx *restrict ctx,
 
   int stript = 0;
   int firsts = 0;
-  int wibble = 0;
   // this is the initial stript value. I don't see why encoding this as zero,
   // then encoding the first stript value as the real start is any worst than
   // encoding this value correctly and then having a 0 value for the first
@@ -430,7 +429,6 @@ jbig2enc_textregion(struct jbig2enc_ctx *restrict ctx,
           // update curs given the width of the bitmap
           curs += (S(assigned)->w - (unborder_symbols ? 2*kBorderSize : 0)) - 1;
         } else {
-          wibble++;
           jbig2enc_int(ctx, JBIG2_IARI, 1);
 
           jbig2enc_int(ctx, JBIG2_IARDW, deltaw);
@@ -443,9 +441,9 @@ jbig2enc_textregion(struct jbig2enc_ctx *restrict ctx,
              (uint8_t *) source->pix[sym]->data, targetw, targeth,
              deltax, -deltay);
 
-          pixDestroy(&symbol);
           curs += targetw - 1;
         }
+        pixDestroy(&symbol);
       } else {
         // update curs given the width of the bitmap
         curs += (S(assigned)->w - (unborder_symbols ? 2*kBorderSize : 0)) - 1;

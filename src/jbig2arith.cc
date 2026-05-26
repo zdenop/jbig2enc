@@ -27,7 +27,7 @@
 #define u8  uint8_t
 
 // C++ doesn't have C99 restricted pointers, but GCC does allow __restrict__
-#if !defined(WIN32)
+#if !defined(_WIN32)
 #define restrict __restrict__
 #else
 #define restrict

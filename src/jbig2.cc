@@ -16,6 +16,8 @@
 // limitations under the License.
 
 #include <vector>
+#include <sstream>
+#include <iomanip>
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -35,7 +37,7 @@
 
 #include "jbig2enc.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define WINBINARY O_BINARY
 #else
 #define WINBINARY 0
@@ -80,6 +82,13 @@ usage(const char *argv0) {
 
 static bool verbose = false;
 
+static bool
+require_arg(int argc, char **argv, int i) {
+  if (i + 1 < argc) return true;
+  fprintf(stderr, "Missing argument for %s\n", argv[i]);
+  usage(argv[0]);
+  return false;
+}
 
 static void
 pixInfo(PIX *pix, const char *msg) {
@@ -92,26 +101,15 @@ pixInfo(PIX *pix, const char *msg) {
           pix->w, pix->h, pix->d, pix->xres, pix->yres, pix->refcount);
 }
 
-#ifdef WIN32
-// -----------------------------------------------------------------------------
-// Windows, sadly, lacks asprintf
-// -----------------------------------------------------------------------------
-#include <stdarg.h>
-int
-asprintf(char **strp, const char *fmt, ...) {
-  va_list va;
-  va_start(va, fmt);
-
-  const int required = vsnprintf(NULL, 0, fmt, va);
-  char *const buffer = (char *) malloc(required + 1);
-  const int ret = vsnprintf(buffer, required + 1, fmt, va);
-  *strp = buffer;
-
-  va_end(va);
-
-  return ret;
+static std::string
+page_filename(const char *basename, int pageno, const char *extension = nullptr) {
+  std::ostringstream filename;
+  filename << basename << '.' << std::setw(4) << std::setfill('0') << pageno;
+  if (extension != nullptr) {
+    filename << '.' << extension;
+  }
+  return filename.str();
 }
-#endif
 
 // -----------------------------------------------------------------------------
 // Morphological operations for segmenting an image into text regions
@@ -233,7 +231,7 @@ main(int argc, char **argv) {
   int dpi = 0;
   int i;
 
-  #ifdef WIN32
+  #if defined(_WIN32)
     int result = _setmode(_fileno(stdout), _O_BINARY);
     if (result == -1)
       fprintf(stderr, "Cannot set mode to binary for stdout\n");
@@ -264,6 +262,7 @@ main(int argc, char **argv) {
 
     if (strcmp(argv[i], "-b") == 0 ||
         strcmp(argv[i], "--basename") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       basename = argv[i+1];
       i++;
       continue;
@@ -307,6 +306,7 @@ main(int argc, char **argv) {
     }
 
     if (strcmp(argv[i], "-O") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       output_threshold_image = argv[i+1];
       i++;
       continue;
@@ -325,6 +325,7 @@ main(int argc, char **argv) {
     }
 
     if (strcmp(argv[i], "-t") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       char *endptr;
       threshold = strtod(argv[i+1], &endptr);
       if (*endptr) {
@@ -345,6 +346,7 @@ main(int argc, char **argv) {
      }
 
     if (strcmp(argv[i], "-w") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       char *endptr;
       weight = strtod(argv[i+1], &endptr);
       if (*endptr) {
@@ -374,6 +376,7 @@ main(int argc, char **argv) {
 
     // If a BW threshold value is requested, overwrite the default value.
     if (strcmp(argv[i], "-T") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       char *endptr;
       bw_threshold = strtol(argv[i+1], &endptr, 10);
       if (*endptr) {
@@ -409,6 +412,7 @@ main(int argc, char **argv) {
 
     if (strcmp(argv[i], "-D") == 0 ||
         strcmp(argv[i], "--dpi") == 0) {
+      if (!require_arg(argc, argv, i)) return 1;
       char *endptr;
       long t_dpi = strtol(argv[i+1], &endptr, 10);
       if (*endptr) {
@@ -475,12 +479,13 @@ main(int argc, char **argv) {
       source = pixReadTiff(argv[i], subimage++);
     }
 
+    if (!source) return 3;
+
     if (dpi != 0 && source->xres == 0 && source->yres == 0) {
       source->xres = dpi;
       source->yres = dpi;
     }
 
-    if (!source) return 3;
     if (verbose)
       pixInfo(source, "source image:");
 
@@ -538,10 +543,8 @@ main(int argc, char **argv) {
       if (graphics) {
         if (verbose)
           pixInfo(graphics, "graphics image:");
-        char *filename;
-        asprintf(&filename, "%s.%04d.%s", basename, pageno, img_ext);
-        pixWrite(filename, graphics, img_fmt);
-        free(filename);
+        const std::string filename = page_filename(basename, pageno, img_ext);
+        pixWrite(filename.c_str(), graphics, img_fmt);
         pixDestroy(&graphics);
       } else if (verbose) {
         fprintf(stderr, "%s: no graphics found in input image\n", argv[i]);
@@ -587,10 +590,8 @@ main(int argc, char **argv) {
   int length;
   ret = jbig2_pages_complete(ctx, &length);
   if (pdfmode) {
-    char *filename;
-    asprintf(&filename, "%s.sym", basename);
-    const int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT | WINBINARY, 0600);
-    free(filename);
+    std::string filename = std::string(basename) + ".sym";
+    const int fd = open(filename.c_str(), O_WRONLY | O_TRUNC | O_CREAT | WINBINARY, 0600);
     if (fd < 0) abort();
     write(fd, ret, length);
     close(fd);
@@ -602,10 +603,8 @@ main(int argc, char **argv) {
   for (int i = 0; i < num_pages; ++i) {
     ret = jbig2_produce_page(ctx, i, -1, -1, &length);
     if (pdfmode) {
-      char *filename;
-      asprintf(&filename, "%s.%04d", basename, i);
-      const int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | WINBINARY, 0600);
-      free(filename);
+      const std::string filename = page_filename(basename, i);
+      const int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | WINBINARY, 0600);
       if (fd < 0) abort();
       write(fd, ret, length);
       close(fd);

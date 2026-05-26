@@ -34,7 +34,7 @@ enum {
 
 #define JBIG2_FILE_MAGIC "\x97\x4a\x42\x32\x0d\x0a\x1a\x0a"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #pragma pack(1)
 #define PACKED
 #else
@@ -183,7 +183,7 @@ struct jbig2_text_region_syminsts {
   // huffman decoding table omitted
 } PACKED;
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #pragma pack()
 #endif
 
