@@ -16,6 +16,8 @@
 // limitations under the License.
 
 #include <vector>
+#include <sstream>
+#include <iomanip>
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -99,26 +101,15 @@ pixInfo(PIX *pix, const char *msg) {
           pix->w, pix->h, pix->d, pix->xres, pix->yres, pix->refcount);
 }
 
-#ifdef WIN32
-// -----------------------------------------------------------------------------
-// Windows, sadly, lacks asprintf
-// -----------------------------------------------------------------------------
-#include <stdarg.h>
-int
-asprintf(char **strp, const char *fmt, ...) {
-  va_list va;
-  va_start(va, fmt);
-
-  const int required = vsnprintf(NULL, 0, fmt, va);
-  char *const buffer = (char *) malloc(required + 1);
-  const int ret = vsnprintf(buffer, required + 1, fmt, va);
-  *strp = buffer;
-
-  va_end(va);
-
-  return ret;
+static std::string
+page_filename(const char *basename, int pageno, const char *extension = nullptr) {
+  std::ostringstream filename;
+  filename << basename << '.' << std::setw(4) << std::setfill('0') << pageno;
+  if (extension != nullptr) {
+    filename << '.' << extension;
+  }
+  return filename.str();
 }
-#endif
 
 // -----------------------------------------------------------------------------
 // Morphological operations for segmenting an image into text regions
@@ -552,10 +543,8 @@ main(int argc, char **argv) {
       if (graphics) {
         if (verbose)
           pixInfo(graphics, "graphics image:");
-        char *filename;
-        asprintf(&filename, "%s.%04d.%s", basename, pageno, img_ext);
-        pixWrite(filename, graphics, img_fmt);
-        free(filename);
+        const std::string filename = page_filename(basename, pageno, img_ext);
+        pixWrite(filename.c_str(), graphics, img_fmt);
         pixDestroy(&graphics);
       } else if (verbose) {
         fprintf(stderr, "%s: no graphics found in input image\n", argv[i]);
@@ -601,10 +590,8 @@ main(int argc, char **argv) {
   int length;
   ret = jbig2_pages_complete(ctx, &length);
   if (pdfmode) {
-    char *filename;
-    asprintf(&filename, "%s.sym", basename);
-    const int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT | WINBINARY, 0600);
-    free(filename);
+    std::string filename = std::string(basename) + ".sym";
+    const int fd = open(filename.c_str(), O_WRONLY | O_TRUNC | O_CREAT | WINBINARY, 0600);
     if (fd < 0) abort();
     write(fd, ret, length);
     close(fd);
@@ -616,10 +603,8 @@ main(int argc, char **argv) {
   for (int i = 0; i < num_pages; ++i) {
     ret = jbig2_produce_page(ctx, i, -1, -1, &length);
     if (pdfmode) {
-      char *filename;
-      asprintf(&filename, "%s.%04d", basename, i);
-      const int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC | WINBINARY, 0600);
-      free(filename);
+      const std::string filename = page_filename(basename, i);
+      const int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC | WINBINARY, 0600);
       if (fd < 0) abort();
       write(fd, ret, length);
       close(fd);
