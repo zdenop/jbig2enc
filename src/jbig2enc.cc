@@ -29,7 +29,7 @@
 #include "leptonica/array_internal.h"
 #endif
 
-#include <math.h>
+#include <cmath>
 #if defined(sun)
 #include <sys/types.h>
 #else

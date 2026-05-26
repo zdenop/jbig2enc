@@ -34,7 +34,7 @@
 #include "leptonica/array_internal.h"
 #endif
 
-#include <math.h>
+#include <cmath>
 
 #define S(i) symbols->pix[i]
 
