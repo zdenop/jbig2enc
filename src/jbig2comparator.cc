@@ -40,6 +40,12 @@
 #define u16 uint16_t
 #define u8  uint8_t
 
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+// TODO(C++20): use std::numbers::pi_v<float>
+#endif
+
 bool
 jbig2enc_are_equivalent(PIX *const first_template, PIX *const second_template) {
   l_int32 w, h, d;
