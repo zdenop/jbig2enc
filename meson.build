@@ -19,6 +19,11 @@ project(
         'leptonica:libjpeg': 'enabled',
         'leptonica:libtiff': 'enabled',
         'leptonica:libz': 'enabled',
+        'leptonica:libpng': 'enabled',
+        'leptonica:libwebp': 'enabled',
+        'leptonica:libwebp-anim': 'enabled',
+        'leptonica:libgif': 'enabled',
+        'leptonica:libjp2k': 'enabled',
         'libjpeg-turbo:tests': 'disabled',
         'libpng:tests': false,
         'tiff:jpeg': 'enabled',
@@ -27,11 +32,19 @@ project(
         'libjpeg-turbo:default_library': 'static',
         'libpng:default_library': 'static',
         'libtiff:default_library': 'static',
-        'zlib:default_library': 'static',
+        'zlib-ng:default_library': 'static',
+        'zlib-ng:zlib-compat': true,
+        'zlib-ng:b_lto': false,
         'libjpeg-turbo:warning_level': '0',
         'libpng:warning_level': '0',
         'libtiff:warning_level': '0',
-        'zlib:warning_level': '0',
+        'zlib-ng:warning_level': '0',
+        'libwebp:default_library': 'static',
+        'libwebp:warning_level': '0',
+        'giflib:default_library': 'static',
+        'giflib:warning_level': '0',
+        'libopenjp2:default_library': 'static',
+        'libopenjp2:warning_level': '0',
     },
 )
 
@@ -57,6 +70,9 @@ add_project_arguments(
     language: 'cpp',
 )
 
+# Pre-resolve giflib with required:true so wrap fallback activates.
+# Leptonica uses required:false which skips wraps entirely.
+dependency('giflib')
 lept_dep = dependency('lept', version: '>=1.74')
 dependencies = [
     lept_dep,
