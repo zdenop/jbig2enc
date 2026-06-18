@@ -206,8 +206,11 @@ jobs:
           fetch-tags: true
 
       - name: '🛒 Install dependencies'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_REQUIRE_TAP_TRUST: "1"
         run: |
-          brew update
+          # brew update
           brew install -q meson leptonica
 
       - name: '🚧 Configure build'
