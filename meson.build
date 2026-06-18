@@ -41,10 +41,18 @@ project(
         'zlib-ng:warning_level': '0',
         'libwebp:default_library': 'static',
         'libwebp:warning_level': '0',
+        'libwebp:cwebp': 'disabled',
+        'libwebp:dwebp': 'disabled',
+        'libwebp:webpinfo': 'disabled',
+        'libwebp:webpmux': 'disabled',
         'giflib:default_library': 'static',
         'giflib:warning_level': '0',
+        'giflib:progs': 'disabled',
+        'giflib:tests': 'disabled',
         'libopenjp2:default_library': 'static',
         'libopenjp2:warning_level': '0',
+        'libopenjp2:build_codec_apps': false,
+        'libopenjp2:build_jpip': false,
     },
 )
 
