@@ -124,7 +124,14 @@ jobs:
         run: meson compile -C build
 
       - name: '🔬 Run tests'
-        run: meson test -C build --print-errorlogs 'jbig2enc:'
+        run: |
+          meson test -C build --print-errorlogs 'jbig2enc:'
+          if [ "${{ matrix.compiler }}" = "mingw-w64-gcc" ]; then
+            wine ./build/src/jbig2.exe -V
+          else
+            ./build/src/jbig2 -V
+          fi
+        if: success() || failure()
 
       - name: '📦 Install build artifact'
         id: install
@@ -171,7 +178,10 @@ jobs:
         run: meson compile -C build
 
       - name: '🔬 Run tests'
-        run: meson test -C build --print-errorlogs 'jbig2enc:'
+        run: |
+           meson test -C build --print-errorlogs 'jbig2enc:'
+           ./build/src/jbig2.exe -V
+        if: success() || failure()
 
       - name: '📦 Install build artifact'
         id: install
@@ -213,4 +223,7 @@ jobs:
         run: meson compile -C build
 
       - name: '🔬 Run tests'
-        run: meson test -C build --print-errorlogs 'jbig2enc:'
+        run: |
+           meson test -C build --print-errorlogs 'jbig2enc:'
+           ./build/src/jbig2 -V
+        if: success() || failure()
