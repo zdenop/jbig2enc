@@ -28,20 +28,20 @@ See the `jbig2enc.h` header for the high level API, or the `jbig2` program for a
 example of usage:
 
 ```sh
-jbig2 -s -a -p -v *.jpg && python3 jbig2topdf.py output >out.pdf
+jbig2 -s -a -p -v -T 100 -b imgs images/*.jpg && python jbig2topdf.py imgs >out.pdf
 ```
 
 or with standalone mode:
 
 ```sh
-jbig2 -a -p -v images/feyn.tif > feyn.jb2 && python3 jbig2topdf.py -s feyn.jb2 > feyn.pdf
+jbig2 -a -p -v images/feyn.tif > feyn.jb2 && python jbig2topdf.py -s feyn.jb2 > feyn.pdf
 ```
 
 to encode jbig2 files for pdf creation.
 If you want to encode an image and then view output first to include in pdf
 
 ```sh
-jbig2 -s -S -p -v -O out.png *.jpg
+jbig2 -s -S -p -v -O out.png images/*.jpg
 ```
 
 If you want to encode an image as jbig2 (can be view in [STDU Viewer](http://www.stdutility.com/stduviewer.html) on Windows) run:
