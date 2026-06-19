@@ -481,7 +481,7 @@ main(int argc, char **argv) {
 
     if (!source) return 3;
 
-    if (dpi != 0 && source->xres == 0 && source->yres == 0) {
+    if (dpi != 0) {
       source->xres = dpi;
       source->yres = dpi;
     }
