@@ -1,3 +1,11 @@
+0.32:
+  * Require C++17 standard
+  * Add arguments checks
+  * Replace asprintf with multiplaform solution
+  * Fix forcing DPI (`-D` switch)
+  * Fix build systems and improve Github Action
+  * Fix memmory leaks
+
 0.31: (2026-04-21)
   * Fix undefined bit shifting behavior in jbig2arith.cc
   * Free resources also when not in symbol mode
