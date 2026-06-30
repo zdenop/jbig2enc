@@ -1,10 +1,10 @@
-0.32:
+0.32: (2026-06-19)
   * Require C++17 standard
   * Add arguments checks
-  * Replace asprintf with multiplaform solution
+  * Replace asprintf with multiplatform solution
   * Fix forcing DPI (`-D` switch)
   * Fix build systems and improve Github Action
-  * Fix memmory leaks
+  * Fix memory leaks
 
 0.31: (2026-04-21)
   * Fix undefined bit shifting behavior in jbig2arith.cc
