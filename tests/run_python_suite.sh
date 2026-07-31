@@ -1,7 +1,7 @@
 #!/bin/sh
 # Runs the jbig2enc Python unittest suite (tests/run.py) under `make check`.
 #
-# The environment is set by TESTS_ENVIRONMENT in src/Makefile.am:
+# The environment is set by TESTS_ENVIRONMENT in tests/Makefile.am:
 #   JBIG2_EXE  path to the freshly built jbig2 binary
 #   PYTHON     python interpreter
 #   TESTS_DIR  path to the tests/ directory
