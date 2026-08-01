@@ -68,7 +68,7 @@ test(
 
 byte_regression = executable(
     'byte_regression',
-    meson.project_source_root() / 'test' / 'byte_regression.cc',
+    meson.project_source_root() / 'tests' / 'byte_regression.cc',
     dependencies: dependencies,
     link_with: lib,
 )
