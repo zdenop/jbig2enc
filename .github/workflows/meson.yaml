@@ -27,7 +27,7 @@ jobs:
         CXX_LD: ${{ matrix.ld }}
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         compiler: [clang, gcc, mingw-w64-gcc]
         include:
