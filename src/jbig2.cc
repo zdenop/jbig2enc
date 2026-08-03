@@ -119,11 +119,14 @@ static const char *segment_seed_sequence = "r1143 + o4.4 + x4"; /* maybe o6.6 */
 static const char *segment_dilation_sequence = "d3.3";
 
 // -----------------------------------------------------------------------------
-// Takes two pix as input, generated from the same original image:
-//   1. pixb   - a binary thresholded image
-//   2. piximg - a color or grayscale image
+// Takes pix as input, generated from the same original image:
+//   1. pixb        - a binary thresholded image (the text binary; graphics
+//                   are subtracted from it in place)
+//   2. piximg      - a color or grayscale image
+//   3. pixmask_src - optional binary used to locate graphics/photo regions;
+//                    may be NULL to use pixb itself (see below)
 // and segments them by finding the areas that contain color or grayscale
-// graphics.  These graphics regions are removed from the input binary
+// graphics. These graphics regions are removed from the input binary
 // image, and they are retained in the returned color-or-grayscale image.
 // The upshot is that after this routine has been run:
 //  (a) the input binary image contains only text, and is NULL if there
@@ -132,16 +135,29 @@ static const char *segment_dilation_sequence = "d3.3";
 //      and is NULL if there is no graphics.
 // The input color-or-grayscale image is not affected.
 //
+// pixmask_src lets the caller locate graphics on an un-cleaned binary while
+// still subtracting them from a separately cleaned text binary. It must be
+// the same size as pixb when supplied.
+//
 // Thanks to Dan Bloomberg for this
 // -----------------------------------------------------------------------------
 
 static PIX*
-segment_image(PIX **ppixb, PIX *piximg) {
+segment_image(PIX **ppixb, PIX *piximg, PIX *pixmask_src) {
   PIX *pixb = *ppixb;
   // Make a mask over the non-text (graphics) part of the input 1 bpp image
-  // Do this by making a seed and mask, and filling the seed into the mask
-  PIX *pixmask4 = pixMorphSequence(pixb, (char *) segment_mask_sequence, 0);
-  PIX *pixseed4 = pixMorphSequence(pixb, (char *) segment_seed_sequence, 0);
+  // Do this by making a seed and mask, and filling the seed into the mask.
+  //
+  // The graphics/photo mask is derived from pixmask_src when one is supplied,
+  // otherwise from the text binary pixb itself. pixCleanBackgroundToWhite()
+  // (the default local thresholding path) flattens photo/halftone texture,
+  // which defeats the morphology below: large photo regions no longer survive
+  // the seed-fill and are misclassified as text. By passing an un-cleaned
+  // binary here, photo regions are detected correctly while the cleaned pixb
+  // is still used for the text output (see the caller).
+  PIX *pixsrc = pixmask_src ? pixmask_src : pixb;
+  PIX *pixmask4 = pixMorphSequence(pixsrc, (char *) segment_mask_sequence, 0);
+  PIX *pixseed4 = pixMorphSequence(pixsrc, (char *) segment_seed_sequence, 0);
   PIX *pixsf4 = pixSeedfillBinary(NULL, pixseed4, pixmask4, 8);
   PIX *pixd4 = pixMorphSequence(pixsf4, (char *) segment_dilation_sequence, 0);
   PIX *pixd = pixExpandBinaryPower2(pixd4, 4);
@@ -151,7 +167,7 @@ segment_image(PIX **ppixb, PIX *piximg) {
   pixDestroy(&pixmask4);
   if (verbose) pixInfo(pixd, "mask image: ");
 
-  // Remove pixels over the graphics part from the text mask.  This
+  // Remove pixels over the graphics part from the text mask. This
   // side-effects the input binary mask.
   pixSubtract(pixb, pixb, pixd);
 
@@ -489,7 +505,7 @@ main(int argc, char **argv) {
     if (verbose)
       pixInfo(source, "source image:");
 
-    PIX *pixl, *gray, *adapt, *pixt;
+    PIX *pixl, *gray, *adapt, *pixt, *pixt_mask = NULL;
     if ((pixl = pixRemoveColormap(source, REMOVE_CMAP_BASED_ON_SRC)) == NULL) {
       fprintf(stderr, "Failed to remove colormap from %s\n", argv[i]);
       return 1;
@@ -507,6 +523,25 @@ main(int argc, char **argv) {
         fprintf(stderr, "Unsupported input image depth: %d\n", pixl->d);
         return 1;
       }
+
+      // In segment mode, build an un-cleaned binary from the raw grayscale
+      // before pixCleanBackgroundToWhite() normalizes the background.  The
+      // local adaptive cleaning flattens photo/halftone texture, which makes
+      // the morphology in segment_image() fail to recognise photos as
+      // graphics (issue #142).  This plain binary is only used to locate the
+      // graphics regions; the cleaned binary below is still used for the
+      // text output.  In global mode there is no cleaning, so pixt itself is
+      // already an un-cleaned binary and no separate mask is needed.
+      if (segment && !globalmode) {
+        if (up2) {
+          pixt_mask = pixScaleGray2xLIThresh(gray, bw_threshold);
+        } else if (up4) {
+          pixt_mask = pixScaleGray4xLIThresh(gray, bw_threshold);
+        } else {
+          pixt_mask = pixThresholdToBinary(gray, bw_threshold);
+        }
+      }
+
       if (!globalmode) {
         adapt = pixCleanBackgroundToWhite(gray, NULL, NULL, 1.0, 90, 190);
       } else {
@@ -526,6 +561,7 @@ main(int argc, char **argv) {
     }
     if (!pixt) {
       fprintf(stderr, "Failed to convert input image to binary\n");
+      pixDestroy(&pixt_mask);
       pixDestroy(&pixl);  // only alive here when segment==true && d>1
       return 1;
     }
@@ -537,8 +573,11 @@ main(int argc, char **argv) {
     }
 
     if (segment && pixl->d > 1) {
-      // If no text is found, pixt is destroyed
-      PIX *graphics = segment_image(&pixt, pixl);
+      // If no text is found, pixt is destroyed.  pixt_mask (un-cleaned binary)
+      // is consumed by segment_image to locate graphics/photo regions.
+      PIX *graphics = segment_image(&pixt, pixl, pixt_mask);
+      pixDestroy(&pixt_mask);
+      pixt_mask = NULL;
       pixDestroy(&pixl);  // if pixt == NULL, the loop exits at 'continue'
       if (graphics) {
         if (verbose)
